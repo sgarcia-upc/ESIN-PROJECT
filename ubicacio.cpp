@@ -1,4 +1,10 @@
 #include "ubicacio.hpp"
+#include <iostream>
+//aquesta funció farà un cour de la ubicació en el format: <filera,plaça,pis>
+//~ void ubicacio::mostra()
+//~ {
+    //~ std::cout<<"<"<<row<<","<<place<<","<<floor<<">";
+//~ }
 
 
 /* Constructora. Crea la ubicació <i, j, k>. Genera un error si
@@ -81,8 +87,7 @@ bool ubicacio::operator<(const ubicacio &u) const throw()
 
 bool ubicacio::operator<=(const ubicacio &u) const throw()
 {
-    return false;
-    
+    return not (*this > u);
 }
 
 bool ubicacio::operator>(const ubicacio &u) const throw()

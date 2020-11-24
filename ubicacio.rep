@@ -1,2 +1,5 @@
 // i = filera, j = plaça, k = pis;
 int row, place, floor;
+
+//aquesta funció farà un cour de la ubicació en el format: <filera,plaça,pis>
+//void mostra();
