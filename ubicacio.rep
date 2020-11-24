@@ -1,0 +1,2 @@
+// i = filera, j = plaça, k = pis;
+int row, place, floor;
