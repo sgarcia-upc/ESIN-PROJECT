@@ -13,6 +13,10 @@ test: ubicacio_tester
 	./ubicacio_tester.exe > meh
 	diff -q meh ubicacio_tester.cor
 	rm meh
+
+github_test:
+	g++ --version
+
 clean:
 	rm -f *.exe
 	rm -f *.o
