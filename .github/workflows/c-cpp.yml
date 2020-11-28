@@ -1,0 +1,15 @@
+name: C/C++ CI
+
+on:
+  workflow_dispatch
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Tests
+      run: make github_test
+
