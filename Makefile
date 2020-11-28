@@ -6,9 +6,13 @@ contenidor:
 ubicacio:
 	g++ -c $(OPCIONS) ubicacio.cpp
 	
-main: ubicacio
-	g++ -o ubicacio.o main.cpp -lesin -o main
+ubicacio_tester: ubicacio
+	g++ -o ubicacio.o ubicacio_tester.cpp -lesin -o ubicacio_tester.exe
 	
+test: ubicacio_tester
+	./ubicacio_tester.exe > meh
+	diff -q meh ubicacio_tester.cor
+	rm meh
 clean:
-	rm -f main
+	rm -f *.exe
 	rm -f *.o
