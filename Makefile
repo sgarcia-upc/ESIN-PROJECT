@@ -7,15 +7,12 @@ ubicacio:
 	g++ -c $(OPCIONS) ubicacio.cpp
 	
 ubicacio_tester: ubicacio
-	g++ -o ubicacio.o ubicacio_tester.cpp -lesin -o ubicacio_tester.exe
+	g++ $(OPCIONS) -o ubicacio.o ubicacio_tester.cpp -lesin -o ubicacio_tester.exe
 	
 test: ubicacio_tester
 	./ubicacio_tester.exe > meh
 	diff -q meh ubicacio_tester.cor
 	rm meh
-
-github_test:
-	g++ --version
 
 clean:
 	rm -f *.exe
