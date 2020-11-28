@@ -8,7 +8,12 @@ ubicacio:
 	
 ubicacio_tester: ubicacio
 	g++ -o ubicacio.o ubicacio_tester.cpp -lesin -o ubicacio_tester.exe
-	
+
+
+contenidor_tester: contenidor
+	g++ -o contenidor.o contenidor_tester.cpp -lesin -o contenidor_tester.exe	
+		
+
 test: ubicacio_tester
 	./ubicacio_tester.exe > meh
 	diff -q meh ubicacio_tester.cor

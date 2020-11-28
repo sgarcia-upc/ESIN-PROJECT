@@ -26,7 +26,7 @@ contenidor& contenidor::operator=(const contenidor &u) throw(error)
 
 contenidor::~contenidor() throw()
 {
-    //res by the moment
+    //res
 }
 
 /* Consultors. Retornen respectivament la _longitud i la matrícula del
