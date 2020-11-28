@@ -1,5 +1,8 @@
 OPCIONS = -O0 -Wall -Wextra -Werror -Wno-sign-compare -std=c++11 -ansi -g
 
+contenidor:
+	g++ -c $(OPCIONS) contenidor.cpp
+
 ubicacio:
 	g++ -c $(OPCIONS) ubicacio.cpp
 	

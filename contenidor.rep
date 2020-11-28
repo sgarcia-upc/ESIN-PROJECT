@@ -1,0 +1,3 @@
+//matricula = matrícula, longitud = longitud
+string _matricula;
+nat _longitud;
