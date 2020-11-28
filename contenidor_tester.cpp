@@ -31,6 +31,7 @@ int main()
     //si c1 != c2 y si c1 < c2 (longitud)
     c1 = contenidor("a1234BC", 1);
     c2 = contenidor("a1234BC", 2);
+    comparatoria( c1, c2 );
     
     //si c2 != c1 y si c2 < c1 (matricula)
     //matricula diferente, long igual
@@ -41,5 +42,5 @@ int main()
     //si c2 != c1 y si c2 < c1 (longitud)
     c1 = contenidor("a1234BC", 2);
     c2 = contenidor("a1234BC", 1);
-    
+    comparatoria( c1, c2 );
 }
