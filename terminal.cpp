@@ -6,15 +6,28 @@
    Genera un error si n=0, m=0, h=0, h > HMAX o
    st no pertany a {FIRST_FIT, LLIURE}. */
 terminal::terminal(nat n, nat m, nat h, estrategia st) throw(error){
+    if (h > HMAX or h == 0) throw error(AlcadaMaxIncorr);
+    if (n == 0) throw error(NumFileresIncorr);
+    if (m == 0) throw error(NumPlacesIncorr);
+    if (st != FIRST_FIT and st != LLIURE) throw error(EstrategiaIncorr);
 
+    _num_fileres = n;
+    _num_pisos = h;
+    _num_places = m;
 }
 
 /* Constructora per còpia, assignació i destructora. */
 terminal::terminal(const terminal& b) throw(error){
+    _num_fileres = b._num_fileres;
+    _num_pisos = b._num_pisos;
+    _num_places = b._num_places;
 
 }
 
 terminal& terminal::operator=(const terminal& b) throw(error){
+    _num_fileres = b._num_fileres;
+    _num_pisos = b._num_pisos;
+    _num_places = b._num_places;
     return *this;
 }
 
@@ -113,17 +126,17 @@ void terminal::area_espera(list<string> &l) const throw(){
 
 /* Retorna el número de fileres de la terminal. */
 nat terminal::num_fileres() const throw(){
-    return 50;
+    return _num_fileres;
 }
 
 /* Retorna el número de places per filera de la terminal. */
 nat terminal::num_places() const throw(){
-    return 50;
+    return _num_places;
 }
 
 /* Retorna l'alçada màxima d'apilament de la terminal. */
 nat terminal::num_pisos() const throw(){
-    return 50;
+    return _num_pisos;
 }
 
 /* Retorna l'estratègia d'inserció i retirada de contenidors de

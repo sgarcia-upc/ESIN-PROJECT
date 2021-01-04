@@ -1,0 +1,5 @@
+
+
+int _num_pisos;
+int _num_fileres;
+int _num_places;

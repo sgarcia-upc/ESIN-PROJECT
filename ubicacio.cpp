@@ -1,10 +1,5 @@
 #include "ubicacio.hpp"
 #include <iostream>
-//aquesta funció farà un cour de la ubicació en el format: <filera,plaça,pis>
-//~ void ubicacio::mostra()
-//~ {
-    //~ std::cout<<"<"<<row<<","<<place<<","<<floor<<">";
-//~ }
 
 
 /* Constructora. Crea la ubicació <i, j, k>. Genera un error si
@@ -12,9 +7,14 @@
  o a {<-1, 0, 0>,  <-1,-1,-1>}. */
 ubicacio::ubicacio(int i, int j, int k) throw(error)
 {
-    row = i;
-    place = j;
-    floor = k;
+    // <i, j, k>
+    if ( i>= 0 and j >= 0 and k >=0 or i==-1 and j==0 and k==0 or i==-1 and j==-1 and k==-1 ){
+        row = i;
+        place = j;
+        floor = k;
+    } else {
+        throw error(UbicacioIncorrecta);
+    }
 }
 
 /* Constructora per còpia, assignació i destructora. */

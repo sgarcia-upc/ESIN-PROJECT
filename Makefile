@@ -1,10 +1,10 @@
 OPCIONS = -O0 -Wall -Wextra -Werror -Wno-sign-compare -std=c++11 -ansi -g
 OPCIONS = -O0 -std=c++11 -ansi -g
 
-all: clean ubicacio.o contenidor.o
+all: clean program.exe
 
 program.exe: driver_gestterm.o ubicacio.o contenidor.o terminal.o
-	g++ -o program.exe driver_gestterm.o ubicacio.o contenidor.o terminal.o -lesin
+	g++ -o program.exe driver_gestterm.o ubicacio.o contenidor.o terminal.o -lesin -L./libesin/lib
 	rm -f *.o
 	
 driver_gestterm.o: driver_gestterm.cpp ubicacio.hpp ubicacio.rep contenidor.hpp contenidor.rep cataleg.t cataleg.hpp terminal.hpp terminal.rep
