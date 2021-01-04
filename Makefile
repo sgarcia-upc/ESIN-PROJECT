@@ -1,7 +1,17 @@
 OPCIONS = -O0 -Wall -Wextra -Werror -Wno-sign-compare -std=c++11 -ansi -g
 
-all: test
+all: driver_gesterm
     
+driver_gesterm.o: driver_gesterm.o ubicacio.o contenidor.o cataleg.t cataleg.hpp
+	g++ -o program.exe driver_gesterm.o ubicacio.o contenidor.o -lesin
+	rm -f *.o
+
+terminal: terminal.cpp terminal.hpp terminal.rep ubicacio.hpp ubicacio.rep contenidor.hpp contenidor.rep cataleg.t cataleg.hpp 
+	g++ -c $(OPCIONS) terminal.cpp
+
+cataleg: clean
+	g++ -c $(OPCIONS) cataleg.t
+
 contenidor: clean
 	g++ -c $(OPCIONS) contenidor.cpp
 
