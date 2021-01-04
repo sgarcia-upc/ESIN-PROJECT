@@ -1,0 +1,16 @@
+
+enum Estat {lliure, esborrat, ocupat};
+struct node_hash {
+    string _k;
+    Valor _v;
+    Estat _est;
+};
+
+
+node_hash **_taula; // taula amb les parells <k,v>
+nat _M; // mida de la taula
+nat _excedents; // mida de la taula d'excedents
+nat _quants; // no d'elements guardats al diccionari
+
+int hash(const string &k) throw();
+
