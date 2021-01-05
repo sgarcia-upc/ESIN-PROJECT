@@ -4,22 +4,23 @@
    aproximat d'elements que com a màxim s'inseriran al catàleg. */
 template <typename Valor>
 cataleg<Valor>::cataleg(nat numelems) throw(error){
-    
-    if (numelems < 13 ) 
-        _M = 13;
-    else
-        _M = numelems;
 
-    _excedents = _M * 0.14;
-    
-    // TODO: comprovar si _M + _excedents es lo que queremos
-    _taula = new node_hash[_M+_excedents]; 
+    if (numelems == 0) numelems = 1;
+
+    _M = next_prime(numelems);
+
+
+    float ex = _M * 0.14;
+    if (ex == (int) ex) _excedents = (int)ex;
+    else _excedents = (int) (ex+1);
+
+    _taula = new node_hash[_M+_excedents];
+    //std::cout << "PRIMER: " << _M << std::endl;
+    //std::cout << _M+_excedents << std::endl;
 
     for (int i=0; i < _M+_excedents; i++){
-        node_hash *n = new node_hash;
+        node_hash *n = &_taula[i];
         n->_ss = FREE;
-        n->_k = "-5";
-        n->_v = -5;
         n->next = -1;
     }
     _quants = 0;
@@ -32,15 +33,17 @@ cataleg<Valor>::cataleg(const cataleg& c) throw(error){
     _excedents = c._excedents;
     _quants = c._quants;
 
+    _taula = new node_hash[_M+_excedents];
+
     for (int i=0; i < _M+_excedents; i++){
-        node_hash *nou = new node_hash;
+        node_hash *nou = &_taula[i];
         node_hash *antic = &c._taula[i];
         nou->_ss = antic->_ss;
         nou->_k = antic->_k;
         nou->_v = antic->_v;
         nou->next = antic->next;
     }
-    
+
 }
 
 template <typename Valor>
@@ -48,9 +51,10 @@ cataleg<Valor>& cataleg<Valor>::operator=(const cataleg& c) throw(error){
     _M = c._M;
     _excedents = c._excedents;
     _quants = c._quants;
+    _taula = new node_hash[_M+_excedents];
 
     for (int i=0; i < _M+_excedents; i++){
-        node_hash *nou = new node_hash;
+        node_hash *nou = &_taula[i];
         node_hash *antic = &c._taula[i];
         nou->_ss = antic->_ss;
         nou->_k = antic->_k;
@@ -63,6 +67,9 @@ cataleg<Valor>& cataleg<Valor>::operator=(const cataleg& c) throw(error){
 template <typename Valor>
 cataleg<Valor>::~cataleg() throw(){
 
+    //for (int i=0; i<_M+_excedents; i++){
+    //    delete &_taula[i];
+    //}
     delete [] _taula;
 }
 
@@ -75,27 +82,26 @@ void cataleg<Valor>::assig(const string &k, const Valor &v) throw(error){
 
     int key = hash(k);
 
-    std::cout << key << std::endl;
     node_hash *n = &_taula[key];
 
     switch (n->_ss)  {
         case FREE:
         case DELETED:
-            n->_ss = BUSY; 
-            n->_k = k; 
-            n->_v = v; 
+            n->_ss = BUSY;
+            n->_k = k;
+            n->_v = v;
             _quants++;
             break;
-    
+
         case BUSY:
             if (n->_k == k){
                 // Si es la mateixa matricula, actualizem el valor
-                n->_v = v; 
+                n->_v = v;
             } else {
                 // Si no es la mateixa matricula, l'afegim
-                //Trobar el ultim node on el hash es igual
+                // Trobar el ultim node on el hash es igual
                 while (n->next != -1){
-                    n = &_taula[n->next]; 
+                    n = &_taula[n->next];
                 }
 
                 // Busquem una posicio lliure a zona d'exedents
@@ -103,9 +109,9 @@ void cataleg<Valor>::assig(const string &k, const Valor &v) throw(error){
 
                     node_hash *nou = &_taula[i];
                     if (nou->_ss != BUSY){
-                        nou->_ss = BUSY; 
-                        nou->_k = k; 
-                        nou->_v = v; 
+                        nou->_ss = BUSY;
+                        nou->_k = k;
+                        nou->_v = v;
                         n->next = i;
                         _quants++;
                         break;
@@ -119,25 +125,29 @@ void cataleg<Valor>::assig(const string &k, const Valor &v) throw(error){
                 std::cout << "NE MAL NE MAL" << std::endl;
                 break;
     }
+
+    float load_factor = _quants / _M;
+    //if (load_factor >= 0.75)
+       // rehash();
 }
 
 /* Elimina del catàleg el parell que té com a clau k.
    En cas que la clau k no existeixi en el catàleg genera un error. */
 template <typename Valor>
 void cataleg<Valor>::elimina(const string &k) throw(error){
-    
+
     int key = hash(k);
-    
+
     bool found = false;
     node_hash *node = &_taula[key];
-    
+
     if (node->_ss == BUSY){
- 
+
         if (node->_k == k) {
             found = true; // if the first case is out k
             node->_ss = DELETED;
         } else {
-            // if there other node_hash 
+            // if there other node_hash
             while (node->next != -1 and found == false){
                 node = &_taula[node->next];
                 if (node->_ss == BUSY)
@@ -157,21 +167,21 @@ void cataleg<Valor>::elimina(const string &k) throw(error){
    en cas contrari. */
 template <typename Valor>
 bool cataleg<Valor>::existeix(const string &k) const throw(){
-    
+
     int key = hash(k);
-    
+
     bool found = false;
     node_hash *node = &_taula[key];
-    
+
     if (node->_ss == BUSY){
- 
+
         if (node->_k == k) {
             found = true; // if the first case is out k
         } else {
-            // if there other node_hash 
+            // if there other node_hash
             while (node->next != -1 and found == false){
                 node=&_taula[node->next];
-                
+
                 if (node->_ss == BUSY)
                     if (node->_k == k){
                         found = true;
@@ -190,17 +200,17 @@ bool cataleg<Valor>::existeix(const string &k) const throw(){
      int n = ct["dia"]; */
 template <typename Valor>
 Valor cataleg<Valor>::operator[](const string &k) const throw(error){
-    
+
     int key = hash(k);
-    
+
     node_hash *node = &_taula[key];
-    
+
     if (node->_ss == BUSY){
- 
+
         if (node->_k == k) {
             return node->_v;
         } else {
-            // if there other node_hash 
+            // if there other node_hash
             while (node->next != -1){
                 node = &_taula[node->next];
                 if (node->_ss == BUSY)
@@ -233,3 +243,79 @@ int cataleg<Valor>::hash(const string &k) const throw() {
         return 0;
     }
 }
+
+template <typename Valor>
+float cataleg<Valor>::sqroot(const int m) const {
+    float i=0;
+    float x1,x2;
+    while( (i*i) <= m )
+            i+=0.1;
+    x1=i;
+    for(int j=0;j<10;j++)
+    {
+        x2=m;
+        x2/=x1;
+        x2+=x1;
+        x2/=2;
+        x1=x2;
+    }
+
+    return x2;
+}
+
+/* 
+    Pre: num es un numero enter positiu
+    Post: restorna num si es primer o el seguent primer trobat de num. Sigui per a num=8 retornara=11
+*/
+template <typename Valor>
+int cataleg<Valor>::next_prime(int num) const {
+
+    if (num == 1) return 2; // auto cast num 1
+
+    while (is_prime(num) != true){
+        if (num % 2 == 0)
+            num++;
+        else 
+            num=num+2; 
+    }
+    return num;   
+}
+
+/*
+    Pre: num es un numero enter positiu
+    Post: retorna true si num es un numero primer, fals en cas contrari
+*/
+template <typename Valor>
+bool cataleg<Valor>::is_prime(const int num) const {
+    
+    if (num < 2)  return false;
+    if (num == 2) return true;
+
+    float sqrt = sqroot(num); 
+    if (sqrt != (int) sqrt) sqrt = (int) (sqrt+1); // Si hi ha decimals cap amunt
+
+    for (int i=2; i <= sqrt; i++){
+        if (num % i == 0){
+            return false;
+        }
+    }
+    return true;
+}
+
+template <typename Valor>
+void cataleg<Valor>::rehash() {
+    int m = next_prime(_M*2); // taula minimament el doble de gran
+    cataleg<Valor> c = cataleg(m);
+
+    for (int i=0; i < _M+_excedents; i++){
+        node_hash *nou = &_taula[i];
+        if (nou->_ss == BUSY){
+            c.assig(nou->_k, nou->_v);
+        }
+        delete &_taula[i];
+    }
+
+    _taula = c._taula;
+    delete c;
+}
+

@@ -115,7 +115,7 @@ nat terminal::fragmentacio() const throw(){
    En canvi no requereix cap operació de grua inserir o
    retirar directament un contenidor de l'àrea d'espera. */
 nat terminal::ops_grua() const throw(){
-    return 6;
+    return _num_ops;
 }
 
 /* Retorna la llista de les matrícules de tots els contenidors
