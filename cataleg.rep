@@ -1,9 +1,10 @@
 enum Status {FREE, DELETED, BUSY};
+
 struct node_hash {
     string _k;
     Valor _v;
     Status _ss;
-    node_hash *next;
+    nat next;
 };
 
 node_hash *_taula;  // taula amb les parells <k,v>

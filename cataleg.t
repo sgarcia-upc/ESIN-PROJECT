@@ -4,8 +4,13 @@
    aproximat d'elements que com a màxim s'inseriran al catàleg. */
 template <typename Valor>
 cataleg<Valor>::cataleg(nat numelems) throw(error){
-    _M = numelems;
-    _excedents = numelems * 0.14;
+    
+    if (numelems < 13 ) 
+        _M = 13;
+    else
+        _M = numelems;
+
+    _excedents = _M * 0.14;
     
     // TODO: comprovar si _M + _excedents es lo que queremos
     _taula = new node_hash[_M+_excedents]; 
@@ -13,7 +18,9 @@ cataleg<Valor>::cataleg(nat numelems) throw(error){
     for (int i=0; i < _M+_excedents; i++){
         node_hash *n = new node_hash;
         n->_ss = FREE;
-        n->next = NULL;
+        n->_k = "-5";
+        n->_v = -5;
+        n->next = -1;
     }
     _quants = 0;
 }
@@ -25,7 +32,15 @@ cataleg<Valor>::cataleg(const cataleg& c) throw(error){
     _excedents = c._excedents;
     _quants = c._quants;
 
-    //_taula = c._taula; // TODO: REFACTOR TO DO A COPY 
+    for (int i=0; i < _M+_excedents; i++){
+        node_hash *nou = new node_hash;
+        node_hash *antic = &c._taula[i];
+        nou->_ss = antic->_ss;
+        nou->_k = antic->_k;
+        nou->_v = antic->_v;
+        nou->next = antic->next;
+    }
+    
 }
 
 template <typename Valor>
@@ -34,7 +49,14 @@ cataleg<Valor>& cataleg<Valor>::operator=(const cataleg& c) throw(error){
     _excedents = c._excedents;
     _quants = c._quants;
 
-    //_taula = c._taula; // TODO: REFACTOR TO DO A COPY 
+    for (int i=0; i < _M+_excedents; i++){
+        node_hash *nou = new node_hash;
+        node_hash *antic = &c._taula[i];
+        nou->_ss = antic->_ss;
+        nou->_k = antic->_k;
+        nou->_v = antic->_v;
+        nou->next = antic->next;
+    }
     return *(this);
 }
 
@@ -53,6 +75,7 @@ void cataleg<Valor>::assig(const string &k, const Valor &v) throw(error){
 
     int key = hash(k);
 
+    std::cout << key << std::endl;
     node_hash *n = &_taula[key];
 
     switch (n->_ss)  {
@@ -70,21 +93,20 @@ void cataleg<Valor>::assig(const string &k, const Valor &v) throw(error){
                 n->_v = v; 
             } else {
                 // Si no es la mateixa matricula, l'afegim
-                node_hash *node = n;
-
                 //Trobar el ultim node on el hash es igual
-                while (node->next != NULL){
-                    node = node->next; 
+                while (n->next != -1){
+                    n = &_taula[n->next]; 
                 }
 
                 // Busquem una posicio lliure a zona d'exedents
                 for (nat i = _M; i < _excedents; i++){
-                    n = &_taula[i];
-                    if (n->_ss != BUSY){
-                        n->_ss = BUSY; 
-                        n->_k = k; 
-                        n->_v = v; 
-                        node->next = n;
+
+                    node_hash *nou = &_taula[i];
+                    if (nou->_ss != BUSY){
+                        nou->_ss = BUSY; 
+                        nou->_k = k; 
+                        nou->_v = v; 
+                        n->next = i;
                         _quants++;
                         break;
                     }
@@ -92,6 +114,10 @@ void cataleg<Valor>::assig(const string &k, const Valor &v) throw(error){
                 //TODO: QUE LA PASTA SI NO TENEMOS ESPACIO: REDIMENSIONAAAAAR.....
             }
             break;
+
+            default:
+                std::cout << "NE MAL NE MAL" << std::endl;
+                break;
     }
 }
 
@@ -100,6 +126,31 @@ void cataleg<Valor>::assig(const string &k, const Valor &v) throw(error){
 template <typename Valor>
 void cataleg<Valor>::elimina(const string &k) throw(error){
     
+    int key = hash(k);
+    
+    bool found = false;
+    node_hash *node = &_taula[key];
+    
+    if (node->_ss == BUSY){
+ 
+        if (node->_k == k) {
+            found = true; // if the first case is out k
+            node->_ss = DELETED;
+        } else {
+            // if there other node_hash 
+            while (node->next != -1 and found == false){
+                node = &_taula[node->next];
+                if (node->_ss == BUSY)
+                    if (node->_k == k){
+                        node->_ss = DELETED;
+                        found = true;
+                    }
+            }
+        }
+    }
+
+    if (not found) throw error(ClauInexistent);
+    else _quants--;
 }
 
 /* Retorna true si i només si la clau k existeix dins del catàleg; false
@@ -107,30 +158,27 @@ void cataleg<Valor>::elimina(const string &k) throw(error){
 template <typename Valor>
 bool cataleg<Valor>::existeix(const string &k) const throw(){
     
-    for (int i = 0; i < _M+_excedents; i++){
-        node_hash *node = &_taula[i];
-        if (node->_ss == BUSY and node->_k == k)
-            return true;
-    }
-    //int key = hash(k);
+    int key = hash(k);
     
     bool found = false;
-    //node_hash *node = &_taula[key];
-    //
-    //if (node->_ss == BUSY){
+    node_hash *node = &_taula[key];
+    
+    if (node->_ss == BUSY){
  
-    //    if (node->_k == k) {
-    //        found = true; // If the first case is out k
-    //    } else {
-    //        // If there other node_hash 
-    //        while (node->next != NULL and found == false){
-    //            node=node->next;
-    //            if (node->_k == k){
-    //                found = true;
-    //            }
-    //        }
-    //    }
-    //}
+        if (node->_k == k) {
+            found = true; // if the first case is out k
+        } else {
+            // if there other node_hash 
+            while (node->next != -1 and found == false){
+                node=&_taula[node->next];
+                
+                if (node->_ss == BUSY)
+                    if (node->_k == k){
+                        found = true;
+                    }
+            }
+        }
+    }
 
     return found;
 }
@@ -142,10 +190,25 @@ bool cataleg<Valor>::existeix(const string &k) const throw(){
      int n = ct["dia"]; */
 template <typename Valor>
 Valor cataleg<Valor>::operator[](const string &k) const throw(error){
-    for (int i = 0; i < _M+_excedents; i++){
-        node_hash *node = &_taula[i];
-        if (node->_ss == BUSY and node->_k == k)
+    
+    int key = hash(k);
+    
+    node_hash *node = &_taula[key];
+    
+    if (node->_ss == BUSY){
+ 
+        if (node->_k == k) {
             return node->_v;
+        } else {
+            // if there other node_hash 
+            while (node->next != -1){
+                node = &_taula[node->next];
+                if (node->_ss == BUSY)
+                    if (node->_k == k){
+                        return node->_v;
+                    }
+            }
+        }
     }
 
     throw error(ClauInexistent);
@@ -160,9 +223,13 @@ nat cataleg<Valor>::quants() const throw(){
 
 template <typename Valor>
 int cataleg<Valor>::hash(const string &k) const throw() {
-    int n = 0;
-    for (int i=0; i < k.length(); ++i) {
-        n = n + k[i]*i; // a n sumen el codi ascii
+    if (_M > 0){
+        int n = 0;
+        for (int i=0; i < k.length(); ++i) {
+            n = n + k[i]*i; // a n sumen el codi ascii
+        }
+        return n % _M;
+    } else {
+        return 0;
     }
-    return n % _M;
 }
