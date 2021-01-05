@@ -1,16 +1,15 @@
-
-enum Estat {lliure, esborrat, ocupat};
+enum Status {FREE, DELETED, BUSY};
 struct node_hash {
     string _k;
     Valor _v;
-    Estat _est;
+    Status _ss;
+    node_hash *next;
 };
 
+node_hash *_taula;  // taula amb les parells <k,v>
+nat _M;             // mida de la taula
+nat _excedents;     // mida de la taula d'excedents
+nat _quants;        // no d'elements guardats al diccionari
 
-node_hash **_taula; // taula amb les parells <k,v>
-nat _M; // mida de la taula
-nat _excedents; // mida de la taula d'excedents
-nat _quants; // no d'elements guardats al diccionari
-
-int hash(const string &k) throw();
+int hash(const string &k) const throw();
 
