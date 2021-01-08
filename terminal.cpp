@@ -6,14 +6,27 @@
    Genera un error si n=0, m=0, h=0, h > HMAX o
    st no pertany a {FIRST_FIT, LLIURE}. */
 terminal::terminal(nat n, nat m, nat h, estrategia st) throw(error){
-    if (h > HMAX or h == 0) throw error(AlcadaMaxIncorr);
     if (n == 0) throw error(NumFileresIncorr);
     if (m == 0) throw error(NumPlacesIncorr);
+    if (h > HMAX or h == 0) throw error(AlcadaMaxIncorr);
     if (st != FIRST_FIT and st != LLIURE) throw error(EstrategiaIncorr);
 
     _num_fileres = n;
     _num_pisos = h;
     _num_places = m;
+    _num_ops = 0;
+    _escollida = st;
+    _cataleg = new cataleg<our_pair>(13);
+    
+    terr = new string **[_num_fileres]();
+    for (int i = 0; i < _num_fileres; i++)
+    {
+        terr[i] = new string *[_num_pisos]();
+        for (int j = 0; j < _num_pisos; j++)
+            terr[i][j] = new string [_num_places]();
+    }
+
+
 }
 
 /* Constructora per còpia, assignació i destructora. */
@@ -21,18 +34,30 @@ terminal::terminal(const terminal& b) throw(error){
     _num_fileres = b._num_fileres;
     _num_pisos = b._num_pisos;
     _num_places = b._num_places;
-
+    _num_ops = b._num_ops;
+    _escollida = b._escollida;
+    _cataleg = b._cataleg; // TODO: Check this
 }
 
 terminal& terminal::operator=(const terminal& b) throw(error){
     _num_fileres = b._num_fileres;
     _num_pisos = b._num_pisos;
     _num_places = b._num_places;
+    _num_ops = b._num_ops;
+    _escollida = b._escollida;
     return *this;
 }
 
 terminal::~terminal() throw(){
 
+    // Destroy TERR
+    for (int i = 0; i < _num_fileres; i++)
+    {
+        for (int j = 0; j < _num_pisos; j++)
+            delete[] terr[i][j];
+        delete[] terr[i];
+    }
+    delete[] terr;
 }
 
 /* Col·loca el contenidor c en l'àrea d'emmagatzematge de la terminal o
@@ -46,6 +71,34 @@ terminal::~terminal() throw(){
    usant. Finalment, genera un error si ja existís a la terminal un
    contenidor amb una matrícula idèntica que la del contenidor c. */
 void terminal::insereix_contenidor(const contenidor &c) throw(error){
+    
+    if (_cataleg->existeix(c.matricula()))
+        throw error(MatriculaDuplicada);
+
+    our_pair op;
+    op.c = new contenidor(c);
+
+
+    // TODO: check if "contenidor" on "area espera" need to be in cataleg
+    if (_escollida == FIRST_FIT){
+        ubicacio u = insereix_first_fit(c);
+        std::cout << u.filera() << " " << u.pis() << " " << u.placa() << std::endl;
+        if (u == ubicacio(-1,0,0)){
+            // Area espera
+            // Afegir area de espera
+            std::cout << "PA LAREA DE ESPERA" <<std::endl;
+        } else {
+            // S'ha afegit correctament
+            // comprovar area de espera
+        }
+        op.u = new ubicacio(u);
+        _cataleg->assig(c.matricula(), op); // throws ClauStringBuit
+        _num_ops++;
+    } 
+
+    if (_escollida == LLIURE) {
+        op.u = new ubicacio(0,0,0);
+    }
 
 }
 
@@ -62,7 +115,19 @@ void terminal::insereix_contenidor(const contenidor &c) throw(error){
    l'ordre que indiqui l'estratègia que s'està usant. Genera un error si a
    la terminal no hi ha cap contenidor la matrícula del qual sigui igual a m. */
 void terminal::retira_contenidor(const string &m) throw(error){
+    
+    if (not _cataleg->existeix(m))
+        throw error(MatriculaInexistent);
 
+    _cataleg->elimina(m); // throws ClauStringBuit
+
+    if (_escollida == FIRST_FIT){
+
+    } 
+
+    if (_escollida == LLIURE) {
+        
+    }
 }
 
 /* Retorna la ubicació <i, j, k> del contenidor la matrícula del qual és
@@ -73,7 +138,15 @@ void terminal::retira_contenidor(const string &m) throw(error){
    Cal recordar que si un contenidor té més de 10 peus, la seva ubicació
    correspon a la plaça que tingui el número de plaça més petit. */
 ubicacio terminal::on(const string &m) const throw(){
-    return ubicacio(1, 1, 1);
+
+    try {
+        our_pair p = _cataleg->operator[](m);
+        return *p.u;
+
+    } catch (error(ClauInexistent)) {
+        std::cout << "NO EXISTE" << std::endl;
+        return ubicacio(-1, -1, -1);
+    }
 
 }
 
@@ -81,7 +154,13 @@ ubicacio terminal::on(const string &m) const throw(){
    a m. Genera un error si no existeix un contenidor a la terminal
    la matrícula del qual sigui igual a m. */
 nat terminal::longitud(const string &m) const throw(error){
-    return 20;
+    //TODO: Area Espera
+    try {
+        our_pair p = _cataleg->operator[](m);
+        return p.c->longitud();
+    } catch (error(ClauInexistent)) {
+        throw(error(MatriculaInexistent));
+    }
 }
 
 /* Retorna la matrícula del contenidor que ocupa la ubicació u = <i, j, k>
@@ -93,7 +172,12 @@ nat terminal::longitud(const string &m) const throw(error){
    ocupar diverses places i la seva ubicació es correspon amb la de la
    plaça ocupada amb número de plaça més baix. */
 void terminal::contenidor_ocupa(const ubicacio &u, string &m) const throw(error){
+    
+    if (u.filera() < 0 or u.filera() >= _num_fileres) throw error(UbicacioNoMagatzem);
+    if (u.pis() < 0 or u.pis() >= _num_pisos) throw error(UbicacioNoMagatzem);
+    if (u.placa() < 0 or u.placa() >= _num_places) throw error(UbicacioNoMagatzem);
 
+    m = terr[u.filera()][u.pis()][u.placa()];
 }  
 
 /* Retorna el nombre de places de la terminal que en aquest instant
@@ -142,5 +226,50 @@ nat terminal::num_pisos() const throw(){
 /* Retorna l'estratègia d'inserció i retirada de contenidors de
    la terminal. */
 terminal::estrategia terminal::quina_estrategia() const throw(){
-    return FIRST_FIT;
+    return _escollida;
 } 
+
+
+// insereix_first_fit ens diu on ha de anar el contenidor
+// retorna 
+// <-2, -2, -2> <- S'afegeix a area d'espera
+// altre: s'afegeix al terminal
+ubicacio terminal::insereix_first_fit (const contenidor &c){
+    int filera, pis, placa;
+    for (filera = 0; filera < _num_fileres; filera++){
+        for (pis = 0; pis < _num_pisos; pis++){
+            for (placa = 0; placa < _num_places; placa++){
+                // estamos en alguna parte deberemos comprobar si hay espacio suficiente
+                if (_num_places - placa >= c.longitud()/10){
+                    if (terr[filera][pis][placa].length() == 0){
+
+                        if (c.longitud() == 10){
+                            terr[filera][pis][placa] = c.matricula();
+                            return ubicacio(filera,placa,pis);
+                        }
+                    
+                        if (c.longitud() == 20){
+                            if (terr[filera][pis][placa+1].length() == 0)
+                                terr[filera][pis][placa] = c.matricula();
+                                terr[filera][pis][placa+1] = c.matricula();
+                                return ubicacio(filera,placa,pis);
+                        }
+
+                        if (c.longitud() == 30){
+                            if (terr[filera][pis][placa+1].length() == 0){
+                                if (terr[filera][pis][placa+2].length() == 0)
+                                terr[filera][pis][placa] = c.matricula();
+                                terr[filera][pis][placa+1] = c.matricula();
+                                terr[filera][pis][placa+2] = c.matricula();
+                                    return ubicacio(filera,placa,pis);
+                            }
+                        }
+            
+                    }
+                }
+            }
+        } 
+    }
+
+    return ubicacio(-1, 0, 0);
+}

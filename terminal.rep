@@ -1,6 +1,23 @@
-
-
+// Numero operacions de la grua
 int _num_ops;
 int _num_pisos;
 int _num_fileres;
 int _num_places;
+
+
+
+// TERR AKA terr[fileres][pisos][places]
+string ***terr;
+
+estrategia _escollida;
+
+struct our_pair {
+    contenidor *c;
+    ubicacio *u;
+};
+
+// Cataleg Matricula:<...>
+cataleg<our_pair> *_cataleg;
+
+
+ubicacio insereix_first_fit (const contenidor &c);
