@@ -11,12 +11,13 @@ terminal::terminal(nat n, nat m, nat h, estrategia st) throw(error){
     if (h > HMAX or h == 0) throw error(AlcadaMaxIncorr);
     if (st != FIRST_FIT and st != LLIURE) throw error(EstrategiaIncorr);
 
+    _aespera = NULL;
     _num_fileres = n;
     _num_pisos = h;
     _num_places = m;
     _num_ops = 0;
     _escollida = st;
-    _cataleg = new cataleg<our_pair>(13);
+    _cataleg = new cataleg<our_pair>(130);
     
     terr = new string **[_num_fileres]();
     for (int i = 0; i < _num_fileres; i++)
@@ -37,6 +38,7 @@ terminal::terminal(const terminal& b) throw(error){
     _num_ops = b._num_ops;
     _escollida = b._escollida;
     _cataleg = b._cataleg; // TODO: Check this
+    // TODO: copy list one by one
 }
 
 terminal& terminal::operator=(const terminal& b) throw(error){
@@ -45,6 +47,7 @@ terminal& terminal::operator=(const terminal& b) throw(error){
     _num_places = b._num_places;
     _num_ops = b._num_ops;
     _escollida = b._escollida;
+    // TODO: copy list one by one
     return *this;
 }
 
@@ -58,6 +61,7 @@ terminal::~terminal() throw(){
         delete[] terr[i];
     }
     delete[] terr;
+    // TODO: delete list one by one
 }
 
 /* Col·loca el contenidor c en l'àrea d'emmagatzematge de la terminal o
@@ -82,18 +86,20 @@ void terminal::insereix_contenidor(const contenidor &c) throw(error){
     // TODO: check if "contenidor" on "area espera" need to be in cataleg
     if (_escollida == FIRST_FIT){
         ubicacio u = insereix_first_fit(c);
-        std::cout << u.filera() << " " << u.pis() << " " << u.placa() << std::endl;
+        //std::cout << u.filera() << " " << u.pis() << " " << u.placa() << std::endl;
         if (u == ubicacio(-1,0,0)){
             // Area espera
             // Afegir area de espera
-            std::cout << "PA LAREA DE ESPERA" <<std::endl;
+            afegir_area_espera(c.matricula());
         } else {
             // S'ha afegit correctament
             // comprovar area de espera
+            _num_ops++;
         }
+
+        // Si o si van al cataleg
         op.u = new ubicacio(u);
         _cataleg->assig(c.matricula(), op); // throws ClauStringBuit
-        _num_ops++;
     } 
 
     if (_escollida == LLIURE) {
@@ -206,6 +212,11 @@ nat terminal::ops_grua() const throw(){
    de l'àrea d'espera de la terminal, en ordre alfabètic creixent. */
 void terminal::area_espera(list<string> &l) const throw(){
 
+    node_list *n = _aespera;
+    while (n != NULL){
+        l.push_back(n->value);
+        n = n->next;
+    }
 }
 
 /* Retorna el número de fileres de la terminal. */
@@ -272,4 +283,42 @@ ubicacio terminal::insereix_first_fit (const contenidor &c){
     }
 
     return ubicacio(-1, 0, 0);
+}
+
+void terminal::afegir_area_espera(const string &m){
+    node_list *ant = NULL;
+    node_list *n = _aespera;
+
+    node_list *nn = new node_list;
+    nn->value = m;
+    nn->next = NULL;
+
+
+    // Al principio
+    if (_aespera == NULL){
+        _aespera = nn;
+    } else {
+
+        bool added = false;
+        while (n != NULL and added == false){
+
+            if (ant == NULL and n->value > m){
+                nn->next = n;
+                _aespera = nn;
+                added = true;
+            } else if (n->value > m){
+                nn->next = ant->next;
+                ant->next = nn;
+                added = true;
+            } else if (n->next == NULL){
+                n->next = nn;
+                added = true;
+            }
+
+            if (not added){
+                ant=n;
+                n = n->next;
+            }
+        }
+    }
 }

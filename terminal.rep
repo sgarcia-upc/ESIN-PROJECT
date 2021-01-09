@@ -5,6 +5,13 @@ int _num_fileres;
 int _num_places;
 
 
+struct node_list {
+    string value;
+    node_list *next;
+};
+
+// lista simplement encadenada sense fanstasma no circular
+node_list *_aespera;
 
 // TERR AKA terr[fileres][pisos][places]
 string ***terr;
@@ -21,3 +28,4 @@ cataleg<our_pair> *_cataleg;
 
 
 ubicacio insereix_first_fit (const contenidor &c);
+void afegir_area_espera(const string &m);
