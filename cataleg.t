@@ -80,6 +80,10 @@ template <typename Valor>
 void cataleg<Valor>::assig(const string &k, const Valor &v) throw(error){
     if ( k.length() == 0 ) throw error(ClauStringBuit);
 
+    float load_factor = _quants / _M;
+    if (load_factor >= 0.75)
+       rehash();
+
     int key = hash(k);
 
     node_hash *n = &_taula[key];
@@ -117,7 +121,6 @@ void cataleg<Valor>::assig(const string &k, const Valor &v) throw(error){
                         break;
                     }
                 }
-                //TODO: QUE LA PASTA SI NO TENEMOS ESPACIO: REDIMENSIONAAAAAR.....
             }
             break;
 
@@ -125,10 +128,6 @@ void cataleg<Valor>::assig(const string &k, const Valor &v) throw(error){
                 std::cout << "NE MAL NE MAL" << std::endl;
                 break;
     }
-
-    float load_factor = _quants / _M;
-    //if (load_factor >= 0.75)
-       // rehash();
 }
 
 /* Elimina del catàleg el parell que té com a clau k.
@@ -228,6 +227,7 @@ Valor cataleg<Valor>::operator[](const string &k) const throw(error){
    fins aquest moment. */
 template <typename Valor>
 nat cataleg<Valor>::quants() const throw(){
+    //std::cout << _M << std::endl;
     return _quants;
 }
 
@@ -263,7 +263,7 @@ float cataleg<Valor>::sqroot(const int m) const {
     return x2;
 }
 
-/* 
+/*
     Pre: num es un numero enter positiu
     Post: restorna num si es primer o el seguent primer trobat de num. Sigui per a num=8 retornara=11
 */
@@ -275,10 +275,10 @@ int cataleg<Valor>::next_prime(int num) const {
     while (is_prime(num) != true){
         if (num % 2 == 0)
             num++;
-        else 
-            num=num+2; 
+        else
+            num=num+2;
     }
-    return num;   
+    return num;
 }
 
 /*
@@ -287,11 +287,11 @@ int cataleg<Valor>::next_prime(int num) const {
 */
 template <typename Valor>
 bool cataleg<Valor>::is_prime(const int num) const {
-    
+
     if (num < 2)  return false;
     if (num == 2) return true;
 
-    float sqrt = sqroot(num); 
+    float sqrt = sqroot(num);
     if (sqrt != (int) sqrt) sqrt = (int) (sqrt+1); // Si hi ha decimals cap amunt
 
     for (int i=2; i <= sqrt; i++){
@@ -304,18 +304,35 @@ bool cataleg<Valor>::is_prime(const int num) const {
 
 template <typename Valor>
 void cataleg<Valor>::rehash() {
-    int m = next_prime(_M*2); // taula minimament el doble de gran
-    cataleg<Valor> c = cataleg(m);
+
+    int m = _M;
+    int e = _excedents;
+
+    _M = next_prime(_M*2); // taula minimament el doble de gran
+    float ex = m * 0.14;     // Excedents
+
+    if (ex == (int) ex) _excedents = (int)ex;
+    else _excedents = (int) (ex+1);
+
+    node_hash *antic = _taula;
+    _taula = new node_hash[_M+_excedents];
 
     for (int i=0; i < _M+_excedents; i++){
-        node_hash *nou = &_taula[i];
-        if (nou->_ss == BUSY){
-            c.assig(nou->_k, nou->_v);
+        node_hash *n = &_taula[i];
+        n->_ss = FREE;
+        n->next = -1;
+    }
+    _quants = 0;
+
+    for (int i=0; i< m+e; i++){
+        if (antic[i]._ss == BUSY){
+            assig(antic[i]._k, antic[i]._v);
+            std::cout << "M" <<std::endl;
         }
-        delete &_taula[i];
     }
 
-    _taula = c._taula;
-    delete c;
+    std::cout<< "REHASHED" << std::endl;
+
+    delete [] antic;
 }
 
