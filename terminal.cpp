@@ -193,7 +193,25 @@ void terminal::contenidor_ocupa(const ubicacio &u, string &m) const throw(error)
    <f, 0, 1>, <f, 1, 2>, <f, 2, 1>, <f, 7, 1>, <f, 8, 0>, <f, 9, 1> i
    <f, 10, 0>). */
 nat terminal::fragmentacio() const throw(){
-    return 5;
+    
+    nat contador = 0; 
+
+    for (int fila = 0; fila < _num_fileres; fila++ ) 
+    {
+        for ( int placa = 0 ; placa < _num_places; placa++ )
+        {
+            for ( int piso = 0; piso < _num_pisos; piso++ )
+            {
+                if ( terr[fila][piso][placa].length() == 0 )
+                {
+                    contador++;
+                    break;
+                }
+            }
+        }
+    }
+    
+    return contador;
 }
 
 /* Retorna el número d'operacions de grua realitzades des del moment
