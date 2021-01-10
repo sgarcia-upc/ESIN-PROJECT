@@ -1,5 +1,6 @@
 #include "terminal.hpp"
 
+
 /* Constructora. Crea una terminal buida amb n fileres de m places
    cadascuna, i una alçada màxima d'apilament h; a més fixa l'estratègia
    d'inserció i retirada dels contenidors respecte el paràmetre st.
@@ -249,6 +250,10 @@ void terminal::area_espera(list<string> &l) const throw(){
         l.push_back(n->value);
         n = n->next;
     }
+    //tenemos la lista rellena, falta ordenar
+    list<string>::iterator end = l.end();
+    --end;
+    quick_sort(l.begin(), end);
 }
 
 /* Retorna el número de fileres de la terminal. */
@@ -421,3 +426,30 @@ void terminal::retirar_first_fit(ubicacio &u){
 }
 
 
+//Pre:
+//Post:
+list<string>::iterator terminal::partition(list<string>::iterator start, list<string>::iterator end_it) const{
+     list<string>::iterator partition_it = start;
+     for(list<string>::iterator i = start; i != end_it; i++){
+         if(*i <= *end_it){
+             std::iter_swap(i, partition_it);
+             ++partition_it;
+         }
+     }
+     std::iter_swap(partition_it, end_it);
+     return partition_it;
+}
+
+//Pre: 
+//Post:
+void terminal::quick_sort(list<string>::iterator start, list<string>::iterator end_it) const{
+    int size = std::distance(start, end_it);
+    if (size <= 1)
+        return;
+
+    list<string>::iterator partition_it = partition(start, end_it);
+    --partition_it;
+
+    quick_sort(start, partition_it);
+    quick_sort(partition_it, end_it);
+}

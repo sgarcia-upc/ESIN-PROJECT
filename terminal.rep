@@ -31,3 +31,5 @@ ubicacio insereix_first_fit (const contenidor &c);
 void afegir_area_espera(const string &m);
 void retirar_first_fit(ubicacio &u);
 void retirar_area_espera(const string &m);
+list<string>::iterator partition(list<string>::iterator start, list<string>::iterator end_it) const;
+void quick_sort(list<string>::iterator start, list<string>::iterator end_it) const;
