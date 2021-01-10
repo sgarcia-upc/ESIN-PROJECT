@@ -84,7 +84,6 @@ void terminal::insereix_contenidor(const contenidor &c) throw(error){
     op.c = new contenidor(c);
 
 
-    // TODO: check if "contenidor" on "area espera" need to be in cataleg
     if (_escollida == FIRST_FIT){
         ubicacio u = insereix_first_fit(c);
         //std::cout << u.filera() << " " << u.pis() << " " << u.placa() << std::endl;
@@ -96,6 +95,22 @@ void terminal::insereix_contenidor(const contenidor &c) throw(error){
             // S'ha afegit correctament
             // comprovar area de espera
             _num_ops++;
+            node_list *n = _aespera;
+            while (n != NULL){
+                our_pair p = _cataleg->operator[](n->value);
+                contenidor pc = *p.c;
+                u = insereix_first_fit(pc);
+        
+                if (u != ubicacio(-1,0,0)){ // Area espera -> area magatzem
+                    _num_ops++;
+                    p.u = new ubicacio(u); 
+                    retirar_area_espera(n->value);
+                    // Com hem eliminat un contenidor de l'area d'espera tornem a començar per si un cas.
+                    n = _aespera;
+                } else  {
+                    n = n->next;
+                }
+            }
         }
 
         // Si o si van al cataleg
@@ -137,14 +152,25 @@ void terminal::retira_contenidor(const string &m) throw(error){
             retirar_area_espera(m);
             _cataleg->elimina(m);
         } else {
-            retirar_first_fit(u); 
-            _cataleg->elimina(m);
+            retirar_first_fit(u, false); 
+            // Inserir area espera
+            node_list *n = _aespera;
+            while (n != NULL){
+                our_pair p = _cataleg->operator[](n->value);
+                contenidor pc = *p.c;
+                u = insereix_first_fit(pc);
+        
+                if (u != ubicacio(-1,0,0)){ // Area espera -> area magatzem
+                    _num_ops++;
+                    p.u = new ubicacio(u); 
+                    retirar_area_espera(n->value);
+                    // Com hem eliminat un contenidor de l'area d'espera tornem a començar per si un cas.
+                    n = _aespera;
+                } else  {
+                    n = n->next;
+                }
+            }
         }
-        // obtenir ubicacio 
-        // obtenir tamany
-
-        // Si hi ha algo encima recall con el piso incrementado
-        // BASE: si no tengo nada salgo
     } 
 
     if (_escollida == LLIURE) {
@@ -391,7 +417,7 @@ void terminal::afegir_area_espera(const string &m){
     }
 }
 
-void terminal::retirar_first_fit(ubicacio &u){
+void terminal::retirar_first_fit(ubicacio &u, bool area_espera){
     string matricula;
     contenidor_ocupa(u, matricula);
     
@@ -413,11 +439,20 @@ void terminal::retirar_first_fit(ubicacio &u){
                     if (c.longitud()/10 >= 3){
                         terr[u.filera()][pis][placa-2] = "";
                     }
+                
+                    our_pair p = _cataleg->operator[](matricula);
+                    if (area_espera){
+                        p.u = new ubicacio(-1,0,0);
+                        _num_ops++;
+                        afegir_area_espera(matricula);
+                    } else {
+                        _cataleg->elimina(matricula);
+                    }
                     break;
                 }
             } else {
                 ubicacio au = ubicacio(u.filera(), placa, pis);
-                retirar_first_fit(au);
+                retirar_first_fit(au, true);
             }
         }
     }
