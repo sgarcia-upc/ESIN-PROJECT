@@ -125,10 +125,25 @@ void terminal::retira_contenidor(const string &m) throw(error){
     if (not _cataleg->existeix(m))
         throw error(MatriculaInexistent);
 
-    _cataleg->elimina(m); // throws ClauStringBuit
+    //_cataleg->elimina(m); // throws ClauStringBuit
 
     if (_escollida == FIRST_FIT){
+        ubicacio u = on(m);
+        if (u == ubicacio(-1,-1,-1)){
+            error(MatriculaInexistent); 
+        } else if (u == ubicacio(-1, 0, 0)){
+            // Esta al area de espera 
+            retirar_area_espera(m);
+            _cataleg->elimina(m);
+        } else {
+            retirar_first_fit(u); 
+            _cataleg->elimina(m);
+        }
+        // obtenir ubicacio 
+        // obtenir tamany
 
+        // Si hi ha algo encima recall con el piso incrementado
+        // BASE: si no tengo nada salgo
     } 
 
     if (_escollida == LLIURE) {
@@ -150,7 +165,6 @@ ubicacio terminal::on(const string &m) const throw(){
         return *p.u;
 
     } catch (error(ClauInexistent)) {
-        std::cout << "NO EXISTE" << std::endl;
         return ubicacio(-1, -1, -1);
     }
 
@@ -303,6 +317,37 @@ ubicacio terminal::insereix_first_fit (const contenidor &c){
     return ubicacio(-1, 0, 0);
 }
 
+void terminal::retirar_area_espera(const string &m){
+    node_list *ant = NULL;
+    node_list *n = _aespera;
+
+    bool deleted = false;
+    while (n != NULL and deleted == false){
+        if (ant == NULL and n ==_aespera and n->value == m){
+            _aespera = n->next;
+            delete n;
+            deleted = true;  
+        } 
+        else if (ant != NULL and n->value == m){
+            ant->next = n->next;
+            delete n;
+            deleted = true;  
+        }
+        else if (ant != NULL and n->next == NULL){
+            ant->next = NULL;
+            delete n;
+            deleted = true;
+        }
+
+
+        if (not deleted){
+            ant = n;
+            n = n->next;   
+        }
+
+    }
+}
+
 void terminal::afegir_area_espera(const string &m){
     node_list *ant = NULL;
     node_list *n = _aespera;
@@ -340,3 +385,39 @@ void terminal::afegir_area_espera(const string &m){
         }
     }
 }
+
+void terminal::retirar_first_fit(ubicacio &u){
+    string matricula;
+    contenidor_ocupa(u, matricula);
+    
+    our_pair p = _cataleg->operator[](matricula);
+    contenidor c = *p.c;
+
+    int contador = 0;
+    for (int pis = u.pis()+1; pis < _num_pisos; pis++){
+        for (int placa=u.placa(); placa < c.longitud()/10; placa++){
+            if (terr[u.filera()][pis][placa].length() == 0){
+                contador++;
+                if (contador == c.longitud()/10){
+                    if (c.longitud()/10 >= 1){
+                        terr[u.filera()][pis][placa] = "";
+                    } 
+                    if (c.longitud()/10 >= 2){
+                        terr[u.filera()][pis][placa-1] = "";
+                    }
+                    if (c.longitud()/10 >= 3){
+                        terr[u.filera()][pis][placa-2] = "";
+                    }
+                    break;
+                }
+            } else {
+                ubicacio au = ubicacio(u.filera(), placa, pis);
+                retirar_first_fit(au);
+            }
+        }
+    }
+    
+
+}
+
+
