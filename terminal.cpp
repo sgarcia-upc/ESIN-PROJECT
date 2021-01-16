@@ -76,9 +76,9 @@ terminal::~terminal() throw(){
    usant. Finalment, genera un error si ja existís a la terminal un
    contenidor amb una matrícula idèntica que la del contenidor c. */
 void terminal::insereix_contenidor(const contenidor &c) throw(error){
-    
-    if (_cataleg->existeix(c.matricula()))
+    if (_cataleg->existeix(c.matricula())){
         throw error(MatriculaDuplicada);
+    }
 
     our_pair op;
     op.c = new contenidor(c);
@@ -86,36 +86,21 @@ void terminal::insereix_contenidor(const contenidor &c) throw(error){
 
     if (_escollida == FIRST_FIT){
         ubicacio u = insereix_first_fit(c);
-        //std::cout << u.filera() << " " << u.pis() << " " << u.placa() << std::endl;
+
+        // Afegim al cataleg
+        op.u = new ubicacio(u);
+        _cataleg->assig(c.matricula(), op); // throws ClauStringBuit
+
         if (u == ubicacio(-1,0,0)){
-            // Area espera
             // Afegir area de espera
             afegir_area_espera(c.matricula());
         } else {
             // S'ha afegit correctament
-            // comprovar area de espera
+            // Reinsertar area_espera
             _num_ops++;
-            node_list *n = _aespera;
-            while (n != NULL){
-                our_pair p = _cataleg->operator[](n->value);
-                contenidor pc = *p.c;
-                u = insereix_first_fit(pc);
-        
-                if (u != ubicacio(-1,0,0)){ // Area espera -> area magatzem
-                    _num_ops++;
-                    p.u = new ubicacio(u); 
-                    retirar_area_espera(n->value);
-                    // Com hem eliminat un contenidor de l'area d'espera tornem a començar per si un cas.
-                    n = _aespera;
-                } else  {
-                    n = n->next;
-                }
-            }
+            reinsertar_area_espera();
         }
 
-        // Si o si van al cataleg
-        op.u = new ubicacio(u);
-        _cataleg->assig(c.matricula(), op); // throws ClauStringBuit
     } 
 
     if (_escollida == LLIURE) {
@@ -138,15 +123,15 @@ void terminal::insereix_contenidor(const contenidor &c) throw(error){
    la terminal no hi ha cap contenidor la matrícula del qual sigui igual a m. */
 void terminal::retira_contenidor(const string &m) throw(error){
     
-    if (not _cataleg->existeix(m))
-        throw error(MatriculaInexistent);
+    //if (not _cataleg->existeix(m))
+    //    throw error(MatriculaInexistent);
 
     //_cataleg->elimina(m); // throws ClauStringBuit
 
     if (_escollida == FIRST_FIT){
         ubicacio u = on(m);
         if (u == ubicacio(-1,-1,-1)){
-            error(MatriculaInexistent); 
+            throw error(MatriculaInexistent); 
         } else if (u == ubicacio(-1, 0, 0)){
             // Esta al area de espera 
             retirar_area_espera(m);
@@ -154,22 +139,7 @@ void terminal::retira_contenidor(const string &m) throw(error){
         } else {
             retirar_first_fit(u, false); 
             // Inserir area espera
-            node_list *n = _aespera;
-            while (n != NULL){
-                our_pair p = _cataleg->operator[](n->value);
-                contenidor pc = *p.c;
-                u = insereix_first_fit(pc);
-        
-                if (u != ubicacio(-1,0,0)){ // Area espera -> area magatzem
-                    _num_ops++;
-                    p.u = new ubicacio(u); 
-                    retirar_area_espera(n->value);
-                    // Com hem eliminat un contenidor de l'area d'espera tornem a començar per si un cas.
-                    n = _aespera;
-                } else  {
-                    n = n->next;
-                }
-            }
+            reinsertar_area_espera();
         }
     } 
 
@@ -315,27 +285,37 @@ ubicacio terminal::insereix_first_fit (const contenidor &c){
             for (placa = 0; placa < _num_places; placa++){
                 // estamos en alguna parte deberemos comprobar si hay espacio suficiente
                 if (_num_places - placa >= c.longitud()/10){
-                    if (terr[filera][pis][placa].length() == 0){
 
-                        if (c.longitud() == 10){
+                    //si estamos en el suelo palante
+                    //si estamos en algun piso comprobar si abajo hay algo
+                    //si estamos en algun piso comprobar si hay algo
+                    if (terr[filera][pis][placa].length() == 0){ // Estamos en un sitio donde almenos hay 1 espacio
+                        //std::cout << "pis: " << pis << "  placa: " << placa << std::endl;
+                        if (c.longitud() == 10){ // Si nuestro contenedor es de 1 espacio lo almacenamos
                             terr[filera][pis][placa] = c.matricula();
                             return ubicacio(filera,placa,pis);
                         }
                     
-                        if (c.longitud() == 20){
-                            if (terr[filera][pis][placa+1].length() == 0)
-                                terr[filera][pis][placa] = c.matricula();
-                                terr[filera][pis][placa+1] = c.matricula();
-                                return ubicacio(filera,placa,pis);
+                        if (c.longitud() == 20){ // Si nuestro contenedor es de 2 espacios deberemos comprobar si nuestra casilla adyacente es valida
+                            if (terr[filera][pis][placa+1].length() == 0){ // Hay espacio hacia la izquierda
+                                if (pis == 0 or terr[filera][pis-1][placa].length() != 0 and terr[filera][pis-1][placa+1].length() != 0){ // Comprobamos que abajo hay suelo o un contenedor
+                                    terr[filera][pis][placa] = c.matricula();
+                                    terr[filera][pis][placa+1] = c.matricula();
+                                    return ubicacio(filera,placa,pis);
+                                }
+                            }
                         }
 
                         if (c.longitud() == 30){
-                            if (terr[filera][pis][placa+1].length() == 0){
-                                if (terr[filera][pis][placa+2].length() == 0)
-                                terr[filera][pis][placa] = c.matricula();
-                                terr[filera][pis][placa+1] = c.matricula();
-                                terr[filera][pis][placa+2] = c.matricula();
+                            if (terr[filera][pis][placa+1].length() == 0 and terr[filera][pis][placa+2].length() == 0){ 
+                                // Hay 2 espacios hacia la izquierda
+                                if (pis == 0 or (terr[filera][pis-1][placa].length() != 0 and terr[filera][pis-1][placa+1].length() != 0 and terr[filera][pis-1][placa+2].length() != 0)){ 
+                                    // Si en esos espacios hay suelo
+                                    terr[filera][pis][placa] = c.matricula();
+                                    terr[filera][pis][placa+1] = c.matricula();
+                                    terr[filera][pis][placa+2] = c.matricula();
                                     return ubicacio(filera,placa,pis);
+                                }
                             }
                         }
             
@@ -417,31 +397,44 @@ void terminal::afegir_area_espera(const string &m){
     }
 }
 
-void terminal::retirar_first_fit(ubicacio &u, bool area_espera){
+void terminal::retirar_first_fit(ubicacio &ubi, bool area_espera){
     string matricula;
-    contenidor_ocupa(u, matricula);
+    contenidor_ocupa(ubi, matricula);
+
     
     our_pair p = _cataleg->operator[](matricula);
     contenidor c = *p.c;
+    ubicacio u = *p.u;
 
     int contador = 0;
-    for (int pis = u.pis()+1; pis < _num_pisos; pis++){
-        for (int placa=u.placa(); placa < c.longitud()/10; placa++){
-            if (terr[u.filera()][pis][placa].length() == 0){
+    for (int pis = u.pis(); pis < _num_pisos; pis++){
+
+        for (int placa=u.placa(); placa < u.placa()+c.longitud()/10; placa++){
+             //std::cout << "SOM A: " << pis << " " << placa << std::endl;
+             //std::cout << placa << " " << c.longitud()/10 << std::endl;
+            // Som amunt de tot o no tenim res adalt
+            if (pis == _num_pisos-1 or terr[u.filera()][pis+1][placa].length() == 0){
+                // TODO: Si no tenim res adalt fer directe
                 contador++;
+                //std::cout << "QUE VOY" << std::endl;
                 if (contador == c.longitud()/10){
-                    if (c.longitud()/10 >= 1){
+                    //std::cout << "DELETED" << std::endl;
+                    if (c.longitud() >= 10){
+                        //std::cout << "ELIMINANDO: " << u.filera() << " - " << pis << " - " << placa << std::endl;
                         terr[u.filera()][pis][placa] = "";
                     } 
-                    if (c.longitud()/10 >= 2){
+                    if (c.longitud() >= 20){
+                        //std::cout << "ELIMINANDO: " <<  u.filera() << " - " << pis << " - " << placa-1 << std::endl;
                         terr[u.filera()][pis][placa-1] = "";
                     }
-                    if (c.longitud()/10 >= 3){
+                    if (c.longitud() >= 30){
+                        //std::cout << "ELIMINANDO: " << u.filera() << " - " << pis << " - " << placa-2 << std::endl;
                         terr[u.filera()][pis][placa-2] = "";
                     }
                 
                     our_pair p = _cataleg->operator[](matricula);
                     if (area_espera){
+                        //std::cout << "BAIA" << std::endl;
                         p.u = new ubicacio(-1,0,0);
                         _num_ops++;
                         afegir_area_espera(matricula);
@@ -451,8 +444,10 @@ void terminal::retirar_first_fit(ubicacio &u, bool area_espera){
                     break;
                 }
             } else {
-                ubicacio au = ubicacio(u.filera(), placa, pis);
+                //std::cout << "NE PORNIOS" << std::endl;
+                ubicacio au = ubicacio(u.filera(), placa, pis+1);
                 retirar_first_fit(au, true);
+                placa--;
             }
         }
     }
@@ -487,4 +482,35 @@ void terminal::quick_sort(list<string>::iterator start, list<string>::iterator e
 
     quick_sort(start, partition_it);
     quick_sort(partition_it, end_it);
+}
+
+void terminal::reinsertar_area_espera() 
+{
+    node_list *n = _aespera;
+    while (n != NULL){
+        //std::cout << n->value << std::endl;
+        our_pair p = _cataleg->operator[](n->value);
+        //std::cout << n->value << std::endl;
+        contenidor pc = *p.c;
+        ubicacio pu = insereix_first_fit(pc);
+    
+        if (pc.matricula() == "D20")
+            std::cout << "MEH::MEPLANTEO" << std::endl;
+        if (pu != ubicacio(-1,0,0)){ // Area espera -> area magatzem
+            if (pc.matricula() == "D20")
+                std::cout << "MEH::VATONTOQUESI" << std::endl;
+            _num_ops++;
+            p.u = new ubicacio(pu); 
+
+            if (pc.matricula() == "D20")
+                std::cout << "MI NUEVO SITIO: " << p.u->filera()<<" " << p.u->pis()<<" " << p.u->placa()<< " " << std::endl;
+            _cataleg->assig(n->value, p);
+
+            retirar_area_espera(n->value);
+            // Com hem eliminat un contenidor de l'area d'espera tornem a començar per si un cas.
+            n = _aespera;
+        } else  {
+            n = n->next;
+        }
+    }
 }
