@@ -9,6 +9,7 @@ cataleg<Valor>::cataleg(nat numelems) throw(error){
 
     _M = next_prime(numelems);
 
+    _ex = 0;
 
     float ex = _M * 0.14;
     if (ex == (int) ex) _excedents = (int)ex;
@@ -85,6 +86,7 @@ void cataleg<Valor>::assig(const string &k, const Valor &v) throw(error){
        rehash();
 
     int key = hash(k);
+    //std::cout << "CATALEG::ASSIG " << k << " - " << hash(k) << " " << std::endl;
 
     node_hash *n = &_taula[key];
 
@@ -102,30 +104,42 @@ void cataleg<Valor>::assig(const string &k, const Valor &v) throw(error){
                 // Si es la mateixa matricula, actualizem el valor
                 n->_v = v;
             } else {
+                _ex++;
                 // Si no es la mateixa matricula, l'afegim
                 // Trobar el ultim node on el hash es igual
-                while (n->next != -1){
+                bool added = false;
+                while (n->next != -1 and not added){ // DELETED ??
                     n = &_taula[n->next];
+                    if (n->_ss == DELETED){
+                        n->_k = k;
+                        n->_v = v;
+                        _quants++;
+                        added = true;
+                    }
+                    if (n->_ss == BUSY and n->_k == k){
+                        n->_v = v;
+                        added = true;
+                    }
                 }
 
+                if (not added){
                 // Busquem una posicio lliure a zona d'exedents
-                for (nat i = _M; i < _excedents; i++){
-
-                    node_hash *nou = &_taula[i];
-                    if (nou->_ss != BUSY){
-                        nou->_ss = BUSY;
-                        nou->_k = k;
-                        nou->_v = v;
-                        n->next = i;
-                        _quants++;
-                        break;
+                    for (nat i = _M; i < _M+_excedents; i++){
+                        node_hash *nou = &_taula[i];
+                        if (nou->_ss != BUSY){
+                            nou->_ss = BUSY;
+                            nou->_k = k;
+                            nou->_v = v;
+                            n->next = i;
+                            _quants++;
+                            break;
+                        }
                     }
                 }
             }
             break;
 
             default:
-                std::cout << "NE MAL NE MAL" << std::endl;
                 break;
     }
 }
@@ -135,6 +149,7 @@ void cataleg<Valor>::assig(const string &k, const Valor &v) throw(error){
 template <typename Valor>
 void cataleg<Valor>::elimina(const string &k) throw(error){
 
+    //std::cout << "CATALEG::ELIMINA " << k << " " << std::endl;
     int key = hash(k);
 
     bool found = false;
@@ -143,7 +158,7 @@ void cataleg<Valor>::elimina(const string &k) throw(error){
     if (node->_ss == BUSY){
 
         if (node->_k == k) {
-            found = true; // if the first case is out k
+            found = true; // if the first case is our k
             node->_ss = DELETED;
         } else {
             // if there other node_hash
@@ -172,19 +187,18 @@ bool cataleg<Valor>::existeix(const string &k) const throw(){
     bool found = false;
     node_hash *node = &_taula[key];
 
-    if (node->_ss == BUSY){
+    if (node->_ss != FREE){
 
-        if (node->_k == k) {
+        if (node->_k == k and node->_ss == BUSY) {
             found = true; // if the first case is out k
         } else {
             // if there other node_hash
             while (node->next != -1 and found == false){
                 node=&_taula[node->next];
 
-                if (node->_ss == BUSY)
-                    if (node->_k == k){
-                        found = true;
-                    }
+                if (node->_k == k and node->_ss == BUSY) {
+                    found = true;
+                }
             }
         }
     }
@@ -204,18 +218,24 @@ Valor cataleg<Valor>::operator[](const string &k) const throw(error){
 
     node_hash *node = &_taula[key];
 
-    if (node->_ss == BUSY){
+    if (node->_ss != FREE){ // debe entrar si es busy o deleted
 
-        if (node->_k == k) {
+        //std::cout << "CLAU: " << node->_k << " - " << k << std::endl;
+        if (node->_k == k and node->_ss == BUSY) { 
             return node->_v;
-        } else {
+        } 
+
+        if (node->_k != k){
             // if there other node_hash
+            //std::cout << "HATE" << std::endl;
             while (node->next != -1){
+                //std::cout << "HATE 2" << std::endl; 
+                // TODO: si es free deja de buscar (aunque nunca debera pasar)
                 node = &_taula[node->next];
-                if (node->_ss == BUSY)
-                    if (node->_k == k){
-                        return node->_v;
-                    }
+                //std::cout << "CLAU: " << node->_k << " - " << k << std::endl;
+                if (node->_k == k and node->_ss == BUSY) { 
+                    return node->_v;
+                }
             }
         }
     }
@@ -327,11 +347,9 @@ void cataleg<Valor>::rehash() {
     for (int i=0; i< m+e; i++){
         if (antic[i]._ss == BUSY){
             assig(antic[i]._k, antic[i]._v);
-            std::cout << "M" <<std::endl;
         }
     }
 
-    std::cout<< "REHASHED" << std::endl;
 
     delete [] antic;
 }
