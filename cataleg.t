@@ -89,16 +89,17 @@ void cataleg<Valor>::assig(const string &k, const Valor &v) throw(error){
     //std::cout << "CATALEG::ASSIG " << k << " - " << hash(k) << " " << std::endl;
 
     node_hash *n = &_taula[key];
+    node_hash *if_nothing = NULL;
 
     switch (n->_ss)  {
         case FREE:
-        case DELETED:
             n->_ss = BUSY;
             n->_k = k;
             n->_v = v;
             _quants++;
-            break;
 
+        case DELETED:
+            if_nothing = n;
         case BUSY:
             if (n->_k == k){
                 // Si es la mateixa matricula, actualizem el valor
@@ -110,29 +111,33 @@ void cataleg<Valor>::assig(const string &k, const Valor &v) throw(error){
                 bool added = false;
                 while (n->next != -1 and not added){ // DELETED ??
                     n = &_taula[n->next];
-                    if (n->_ss == DELETED){
-                        n->_k = k;
-                        n->_v = v;
-                        _quants++;
-                        added = true;
-                    }
                     if (n->_ss == BUSY and n->_k == k){
                         n->_v = v;
                         added = true;
                     }
+                    if (if_nothing == NULL and n->_ss == DELETED){
+                        if_nothing = n;
+                    }
                 }
 
                 if (not added){
-                // Busquem una posicio lliure a zona d'exedents
-                    for (nat i = _M; i < _M+_excedents; i++){
-                        node_hash *nou = &_taula[i];
-                        if (nou->_ss != BUSY){
-                            nou->_ss = BUSY;
-                            nou->_k = k;
-                            nou->_v = v;
-                            n->next = i;
-                            _quants++;
-                            break;
+                    if (if_nothing != NULL){
+                        if_nothing->_k = k;
+                        if_nothing->_v = v;
+                        if_nothing->_ss = BUSY;
+                        _quants++;
+                    } else { 
+                        // Busquem una posicio lliure a zona d'exedents
+                        for (nat i = _M; i < _M+_excedents; i++){
+                            node_hash *nou = &_taula[i];
+                            if (nou->_ss == FREE){
+                                nou->_ss = BUSY;
+                                nou->_k = k;
+                                nou->_v = v;
+                                n->next = i;
+                                _quants++;
+                                break;
+                            }
                         }
                     }
                 }
@@ -149,23 +154,27 @@ void cataleg<Valor>::assig(const string &k, const Valor &v) throw(error){
 template <typename Valor>
 void cataleg<Valor>::elimina(const string &k) throw(error){
 
-    //std::cout << "CATALEG::ELIMINA " << k << " " << std::endl;
+    //std::cout << "CATALEG::ELIMINA " << k << " hash:" << hash(k) << std::endl;
     int key = hash(k);
 
     bool found = false;
     node_hash *node = &_taula[key];
 
-    if (node->_ss == BUSY){
+    //std::cout << "Clau: " << k << " ?? " << node->_k << " estado: " << node->_ss << std::endl;
+    if (node->_ss != FREE){
 
         if (node->_k == k) {
+            //std::cout << "<--- deleted" << std::endl;
             found = true; // if the first case is our k
             node->_ss = DELETED;
         } else {
             // if there other node_hash
             while (node->next != -1 and found == false){
                 node = &_taula[node->next];
+                //std::cout << "Clau: " << k << " ?? " << node->_k << " estado: " << node->_ss << std::endl;
                 if (node->_ss == BUSY)
                     if (node->_k == k){
+                        //std::cout << "<--- deleted" << std::endl;
                         node->_ss = DELETED;
                         found = true;
                     }
@@ -220,19 +229,13 @@ Valor cataleg<Valor>::operator[](const string &k) const throw(error){
 
     if (node->_ss != FREE){ // debe entrar si es busy o deleted
 
-        //std::cout << "CLAU: " << node->_k << " - " << k << std::endl;
         if (node->_k == k and node->_ss == BUSY) { 
             return node->_v;
         } 
 
         if (node->_k != k){
-            // if there other node_hash
-            //std::cout << "HATE" << std::endl;
             while (node->next != -1){
-                //std::cout << "HATE 2" << std::endl; 
-                // TODO: si es free deja de buscar (aunque nunca debera pasar)
                 node = &_taula[node->next];
-                //std::cout << "CLAU: " << node->_k << " - " << k << std::endl;
                 if (node->_k == k and node->_ss == BUSY) { 
                     return node->_v;
                 }

@@ -100,7 +100,6 @@ void terminal::insereix_contenidor(const contenidor &c) throw(error){
             _num_ops++;
             reinsertar_area_espera();
         }
-
     } 
 
     if (_escollida == LLIURE) {
@@ -137,6 +136,7 @@ void terminal::retira_contenidor(const string &m) throw(error){
             retirar_area_espera(m);
             _cataleg->elimina(m);
         } else {
+            _num_ops++;
             retirar_first_fit(u, false); 
             // Inserir area espera
             reinsertar_area_espera();
@@ -213,10 +213,29 @@ nat terminal::fragmentacio() const throw(){
         {
             for ( int piso = 0; piso < _num_pisos; piso++ )
             {
-                if ( terr[fila][piso][placa].length() == 0 )
+                if ( terr[fila][piso][placa].length() == 0)
                 {
-                    contador++;
-                    break;
+                    if (placa == 0){
+                        if (piso > 0 and terr[fila][piso][placa+1].length() == 0 and terr[fila][piso-1][placa+1].length() == 0){
+                            contador++;
+                        } else if (terr[fila][piso][placa+1].length() != 0) contador++;
+
+                    } else if (placa == _num_places-1){
+                        if (piso > 0 and terr[fila][piso][placa-1].length() == 0 and terr[fila][piso-1][placa-1].length() == 0){
+                            contador++;
+                        }
+                        
+                        if (terr[fila][piso][placa-1].length() != 0) contador++;
+
+                    } else {
+                        if (terr[fila][piso][placa-1].length() != 0 and terr[fila][piso][placa+1].length() != 0){
+                            contador++;
+                        } else if (terr[fila][piso][placa-1].length() == 0 and terr[fila][piso][placa+1].length() != 0 and terr[fila][piso-1][placa+1].length() != 0){
+                            contador++;
+                        } else if (terr[fila][piso][placa-1].length() != 0 and terr[fila][piso][placa+1].length() == 0 and terr[fila][piso-1][placa-1].length() != 0){
+                            contador++;
+                        }
+                    } 
                 }
             }
         }
@@ -238,18 +257,39 @@ nat terminal::ops_grua() const throw(){
 }
 
 /* Retorna la llista de les matrícules de tots els contenidors
-   de l'àrea d'espera de la terminal, en ordre alfabètic creixent. */
+   de l'àrea d'espera de la terminal, en ordre alfabètic creixent. 
+
+    n = nodes en l'area de espera
+    O(n)
+*/
 void terminal::area_espera(list<string> &l) const throw(){
 
     node_list *n = _aespera;
     while (n != NULL){
-        l.push_back(n->value);
+        list<string>::iterator it = l.begin();
+
+        if (l.begin() == l.end()){
+            l.push_back(n->value);
+        } else if (n->value < *l.begin()){
+            l.insert(l.begin(), n->value);
+        } else {
+            bool added = false;
+            while (it != l.end()){
+                //std::cout << n->value << " < " << *it << std::endl;
+                if (n->value < *it){
+                    l.insert(it, n->value);
+                    added = true;
+                    break;
+                }
+                ++it;
+            }
+
+            if (not added) l.push_back(n->value);
+        }
         n = n->next;
     }
-    //tenemos la lista rellena, falta ordenar
-    list<string>::iterator end = l.end();
-    --end;
-    quick_sort(l.begin(), end);
+
+    //l.sort();
 }
 
 /* Retorna el número de fileres de la terminal. */
@@ -274,11 +314,57 @@ terminal::estrategia terminal::quina_estrategia() const throw(){
 } 
 
 
-// insereix_first_fit ens diu on ha de anar el contenidor
-// retorna 
-// <-2, -2, -2> <- S'afegeix a area d'espera
-// altre: s'afegeix al terminal
 ubicacio terminal::insereix_first_fit (const contenidor &c){
+    int filera, pis, placa;
+    for (filera = 0; filera < _num_fileres; filera++){
+        for (placa = 0; placa < _num_places; placa++){
+            for (pis = 0; pis < _num_pisos; pis++){
+                // estamos en alguna parte deberemos comprobar si hay espacio suficiente
+                if (_num_places - placa >= c.longitud()/10){
+
+                    //si estamos en el suelo palante
+                    //si estamos en algun piso comprobar si abajo hay algo
+                    //si estamos en algun piso comprobar si hay algo
+                    if (terr[filera][pis][placa].length() == 0){ // Estamos en un sitio donde almenos hay 1 espacio
+                        //std::cout << "pis: " << pis << "  placa: " << placa << std::endl;
+                        if (c.longitud() == 10){ // Si nuestro contenedor es de 1 espacio lo almacenamos
+                            terr[filera][pis][placa] = c.matricula();
+                            return ubicacio(filera,placa,pis);
+                        }
+                    
+                        if (c.longitud() == 20){ // Si nuestro contenedor es de 2 espacios deberemos comprobar si nuestra casilla adyacente es valida
+                            if (terr[filera][pis][placa+1].length() == 0){ // Hay espacio hacia la izquierda
+                                if (pis == 0 or terr[filera][pis-1][placa].length() != 0 and terr[filera][pis-1][placa+1].length() != 0){ // Comprobamos que abajo hay suelo o un contenedor
+                                    terr[filera][pis][placa] = c.matricula();
+                                    terr[filera][pis][placa+1] = c.matricula();
+                                    return ubicacio(filera,placa,pis);
+                                }
+                            }
+                        }
+
+                        if (c.longitud() == 30){
+                            if (terr[filera][pis][placa+1].length() == 0 and terr[filera][pis][placa+2].length() == 0){ 
+                                // Hay 2 espacios hacia la izquierda
+                                if (pis == 0 or (terr[filera][pis-1][placa].length() != 0 and terr[filera][pis-1][placa+1].length() != 0 and terr[filera][pis-1][placa+2].length() != 0)){ 
+                                    // Si en esos espacios hay suelo
+                                    terr[filera][pis][placa] = c.matricula();
+                                    terr[filera][pis][placa+1] = c.matricula();
+                                    terr[filera][pis][placa+2] = c.matricula();
+                                    return ubicacio(filera,placa,pis);
+                                }
+                            }
+                        }
+            
+                    }
+                }
+            }
+        } 
+    }
+
+    return ubicacio(-1, 0, 0);
+}
+
+ubicacio terminal::insereix_lliure (const contenidor &c){
     int filera, pis, placa;
     for (filera = 0; filera < _num_fileres; filera++){
         for (pis = 0; pis < _num_pisos; pis++){
@@ -360,40 +446,16 @@ void terminal::retirar_area_espera(const string &m){
 }
 
 void terminal::afegir_area_espera(const string &m){
-    node_list *ant = NULL;
-    node_list *n = _aespera;
-
     node_list *nn = new node_list;
     nn->value = m;
     nn->next = NULL;
-
 
     // Al principio
     if (_aespera == NULL){
         _aespera = nn;
     } else {
-
-        bool added = false;
-        while (n != NULL and added == false){
-
-            if (ant == NULL and n->value > m){
-                nn->next = n;
-                _aespera = nn;
-                added = true;
-            } else if (n->value > m){
-                nn->next = ant->next;
-                ant->next = nn;
-                added = true;
-            } else if (n->next == NULL){
-                n->next = nn;
-                added = true;
-            }
-
-            if (not added){
-                ant=n;
-                n = n->next;
-            }
-        }
+        nn->next = _aespera;
+        _aespera = nn;
     }
 }
 
@@ -434,7 +496,6 @@ void terminal::retirar_first_fit(ubicacio &ubi, bool area_espera){
                 
                     our_pair p = _cataleg->operator[](matricula);
                     if (area_espera){
-                        //std::cout << "BAIA" << std::endl;
                         p.u = new ubicacio(-1,0,0);
                         _num_ops++;
                         afegir_area_espera(matricula);
@@ -444,7 +505,6 @@ void terminal::retirar_first_fit(ubicacio &ubi, bool area_espera){
                     break;
                 }
             } else {
-                //std::cout << "NE PORNIOS" << std::endl;
                 ubicacio au = ubicacio(u.filera(), placa, pis+1);
                 retirar_first_fit(au, true);
                 placa--;
@@ -453,35 +513,6 @@ void terminal::retirar_first_fit(ubicacio &ubi, bool area_espera){
     }
     
 
-}
-
-
-//Pre:
-//Post:
-list<string>::iterator terminal::partition(list<string>::iterator start, list<string>::iterator end_it) const{
-     list<string>::iterator partition_it = start;
-     for(list<string>::iterator i = start; i != end_it; i++){
-         if(*i <= *end_it){
-             std::iter_swap(i, partition_it);
-             ++partition_it;
-         }
-     }
-     std::iter_swap(partition_it, end_it);
-     return partition_it;
-}
-
-//Pre: 
-//Post:
-void terminal::quick_sort(list<string>::iterator start, list<string>::iterator end_it) const{
-    int size = std::distance(start, end_it);
-    if (size <= 1)
-        return;
-
-    list<string>::iterator partition_it = partition(start, end_it);
-    --partition_it;
-
-    quick_sort(start, partition_it);
-    quick_sort(partition_it, end_it);
 }
 
 void terminal::reinsertar_area_espera() 
@@ -493,17 +524,11 @@ void terminal::reinsertar_area_espera()
         //std::cout << n->value << std::endl;
         contenidor pc = *p.c;
         ubicacio pu = insereix_first_fit(pc);
-    
-        if (pc.matricula() == "D20")
-            std::cout << "MEH::MEPLANTEO" << std::endl;
+         
         if (pu != ubicacio(-1,0,0)){ // Area espera -> area magatzem
-            if (pc.matricula() == "D20")
-                std::cout << "MEH::VATONTOQUESI" << std::endl;
             _num_ops++;
             p.u = new ubicacio(pu); 
 
-            if (pc.matricula() == "D20")
-                std::cout << "MI NUEVO SITIO: " << p.u->filera()<<" " << p.u->pis()<<" " << p.u->placa()<< " " << std::endl;
             _cataleg->assig(n->value, p);
 
             retirar_area_espera(n->value);
