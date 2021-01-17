@@ -26,6 +26,7 @@ struct our_pair {
 // Cataleg Matricula:<...>
 cataleg<our_pair> *_cataleg;
 
+ubicacio insereix_lliure (const contenidor &c);
 
 ubicacio insereix_first_fit (const contenidor &c);
 void afegir_area_espera(const string &m);

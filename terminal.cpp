@@ -142,7 +142,7 @@ void terminal::retira_contenidor(const string &m) throw(error){
             reinsertar_area_espera();
         }
     } 
-
+    
     if (_escollida == LLIURE) {
         
     }
@@ -206,6 +206,7 @@ void terminal::contenidor_ocupa(const ubicacio &u, string &m) const throw(error)
 nat terminal::fragmentacio() const throw(){
     
     nat contador = 0; 
+    
 
     for (int fila = 0; fila < _num_fileres; fila++ ) 
     {
@@ -213,27 +214,54 @@ nat terminal::fragmentacio() const throw(){
         {
             for ( int piso = 0; piso < _num_pisos; piso++ )
             {
-                if ( terr[fila][piso][placa].length() == 0)
+                if ( _num_pisos == 1 and _num_fileres == 1 and _num_places == 1 and terr[fila][piso][placa].length() == 0 )
+                {
+                    contador = 1;
+                    return contador;
+                    break;
+                }
+                
+                if ( terr[fila][piso][placa].length() == 0 )
                 {
                     if (placa == 0){
-                        if (piso > 0 and terr[fila][piso][placa+1].length() == 0 and terr[fila][piso-1][placa+1].length() == 0){
+                        if (piso > 0 and terr[fila][piso][placa+1].length() == 0 and terr[fila][piso-1][placa+1].length() == 0 and terr[fila][piso-1][placa].length() != 0){ //tengo que mirar también si tengo algo debajo, porque si contamos las vacías sin nada debajo nos salen 35
                             contador++;
-                        } else if (terr[fila][piso][placa+1].length() != 0) contador++;
+                            //~ if ( contador == 1 ) std::cout<<fila<<" "<<piso<<" "<<placa<<std::endl;
+                        } else if ( (piso == 0 and terr[fila][piso][placa+1].length() != 0) or ( piso > 0 and terr[fila][piso-1][placa].length() != 0) and terr[fila][piso][placa+1].length() != 0) contador++;
 
                     } else if (placa == _num_places-1){
-                        if (piso > 0 and terr[fila][piso][placa-1].length() == 0 and terr[fila][piso-1][placa-1].length() == 0){
+                        if (piso > 0 and terr[fila][piso][placa-1].length() == 0 and terr[fila][piso-1][placa-1].length() == 0 and terr[fila][piso-1][placa].length() != 0){
                             contador++;
-                        }
-                        
-                        if (terr[fila][piso][placa-1].length() != 0) contador++;
+                            //~ if ( contador == 1 ) std::cout<<fila<<" "<<piso<<" "<<placa<<std::endl;
+                        } else if ( (piso == 0 and terr[fila][piso][placa-1].length() != 0) or ( piso > 0 and terr[fila][piso-1][placa].length() != 0 and terr[fila][piso][placa-1].length() != 0)) contador++;
 
                     } else {
-                        if (terr[fila][piso][placa-1].length() != 0 and terr[fila][piso][placa+1].length() != 0){
+                        if ( piso == 0 and terr[fila][piso][placa-1].length() != 0 and terr[fila][piso][placa+1].length() != 0){
                             contador++;
-                        } else if (terr[fila][piso][placa-1].length() == 0 and terr[fila][piso][placa+1].length() != 0 and terr[fila][piso-1][placa+1].length() != 0){
-                            contador++;
-                        } else if (terr[fila][piso][placa-1].length() != 0 and terr[fila][piso][placa+1].length() == 0 and terr[fila][piso-1][placa-1].length() != 0){
-                            contador++;
+                            //~ if ( contador == 1 ) std::cout<<fila<<" "<<piso<<" "<<placa<<std::endl;
+                        }else if ( piso > 0 ){
+                            
+                            if (terr[fila][piso-1][placa].length() != 0){ //quien tenga algo debajo cuenta, quien no, aire
+                                //~ if ( terr[fila][piso-1][placa-1].length() != 0 and terr[fila][piso-1][placa+1].length() != 0){
+                                    //~ contador++;
+                                    //~ if ( contador == 1 ) std::cout<<fila<<" "<<piso<<" "<<placa<<std::endl;
+                                //~ } else 
+                                if ( terr[fila][piso][placa-1].length() != 0 and terr[fila][piso-1][placa+1].length() == 0){ //y tienes algo debajo
+                                    contador++;
+                                    //~ if ( contador == 1 ) std::cout<<fila<<" "<<piso<<" "<<placa<<std::endl;
+                                } else if ( terr[fila][piso][placa+1].length() != 0 and terr[fila][piso-1][placa-1].length() == 0){
+                                    contador++;
+                                    //~ if ( contador == 1 ) std::cout<<fila<<" "<<piso<<" "<<placa<<std::endl;
+                                } else if ( terr[fila][piso][placa-1].length() != 0 and terr[fila][piso][placa+1].length() == 0 and terr[fila][piso-1][placa+1].length() == 0){
+                                    contador++;
+                                    //~ if ( contador == 1 ) std::cout<<fila<<" "<<piso<<" "<<placa<<std::endl;
+                                } else if ( terr[fila][piso][placa+1].length() != 0 and terr[fila][piso][placa-1].length() == 0 and terr[fila][piso-1][placa-1].length() != 0){
+                                    contador++;
+                                    if ( contador == 1 ) std::cout<<fila<<" "<<piso<<" "<<placa<<std::endl;
+                                } else if ( terr[fila][piso][placa-1].length() != 0 and terr[fila][piso][placa+1].length() != 0 ){
+                                    contador++;
+                                }
+                            }
                         }
                     } 
                 }
