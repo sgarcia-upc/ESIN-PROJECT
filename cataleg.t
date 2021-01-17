@@ -15,8 +15,6 @@ cataleg<Valor>::cataleg(nat numelems) throw(error){
     else _excedents = (int) (ex+1);
 
     _taula = new node_hash[_M+_excedents];
-    //std::cout << "PRIMER: " << _M << std::endl;
-    //std::cout << _M+_excedents << std::endl;
 
     for (int i=0; i < _M+_excedents; i++){
         node_hash *n = &_taula[i];
@@ -120,7 +118,7 @@ void cataleg<Valor>::assig(const string &k, const Valor &v) throw(error){
                         if_nothing->_v = v;
                         if_nothing->_ss = BUSY;
                         _quants++;
-                    } else { 
+                    } else {
                         // Busquem una posicio lliure a zona d'exedents
                         for (nat i = _M; i < _M+_excedents; i++){
                             node_hash *nou = &_taula[i];
@@ -134,7 +132,7 @@ void cataleg<Valor>::assig(const string &k, const Valor &v) throw(error){
                                 break;
                             }
                         }
-                
+
                         if (not added){
                             rehash();
                             assig(k, v);
@@ -154,27 +152,22 @@ void cataleg<Valor>::assig(const string &k, const Valor &v) throw(error){
 template <typename Valor>
 void cataleg<Valor>::elimina(const string &k) throw(error){
 
-    //std::cout << "CATALEG::ELIMINA " << k << " hash:" << hash(k) << std::endl;
     int key = hash(k);
 
     bool found = false;
     node_hash *node = &_taula[key];
 
-    //std::cout << "Clau: " << k << " ?? " << node->_k << " estado: " << node->_ss << std::endl;
     if (node->_ss != FREE){
 
         if (node->_k == k) {
-            //std::cout << "<--- deleted" << std::endl;
             found = true; // if the first case is our k
             node->_ss = DELETED;
         } else {
             // if there other node_hash
             while (node->next != -1 and found == false){
                 node = &_taula[node->next];
-                //std::cout << "Clau: " << k << " ?? " << node->_k << " estado: " << node->_ss << std::endl;
                 if (node->_ss == BUSY)
                     if (node->_k == k){
-                        //std::cout << "<--- deleted" << std::endl;
                         node->_ss = DELETED;
                         found = true;
                     }
@@ -228,14 +221,14 @@ Valor cataleg<Valor>::operator[](const string &k) const throw(error){
 
     if (node->_ss != FREE){ // debe entrar si es busy o deleted
 
-        if (node->_k == k and node->_ss == BUSY) { 
+        if (node->_k == k and node->_ss == BUSY) {
             return node->_v;
-        } 
+        }
 
         if (node->_k != k){
             while (node->next != -1){
                 node = &_taula[node->next];
-                if (node->_k == k and node->_ss == BUSY) { 
+                if (node->_k == k and node->_ss == BUSY) {
                     return node->_v;
                 }
             }
@@ -249,7 +242,6 @@ Valor cataleg<Valor>::operator[](const string &k) const throw(error){
    fins aquest moment. */
 template <typename Valor>
 nat cataleg<Valor>::quants() const throw(){
-    //std::cout << _M << std::endl;
     return _quants;
 }
 

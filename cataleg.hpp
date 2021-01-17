@@ -1,5 +1,5 @@
 #ifndef _CATALEG_HPP
-#define _CATALEG_HPP 
+#define _CATALEG_HPP
 #include <string>
 #include <esin/error>
 #include <esin/util>
