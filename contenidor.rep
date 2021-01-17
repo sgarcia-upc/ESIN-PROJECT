@@ -1,3 +1,5 @@
-//matricula = matrícula, longitud = longitud
+// S'utilitza per indentificar un contenidor
 string _matricula;
+
+// S'utilitza per representar la longitud d'un contenidor
 nat _longitud;

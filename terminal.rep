@@ -1,37 +1,175 @@
-// Numero operacions de la grua
-int _num_ops;
-int _num_pisos;
-int _num_fileres;
-int _num_places;
+// S'utlitza per representar el nombre d'operacions fet per la grua
+nat _num_ops;
+
+// S'utlitza per representar el nombre de pisos maxim de la terminal
+nat _num_pisos;
+
+// S'utlitza per representar el nombre de fileres maxim de la terminal
+nat _num_fileres;
+
+// S'utlitza per representar el nombre de places maxim de la terminal
+nat _num_places;
 
 
+// Estructura utilitzada per fer la area de espera consta de: 
+// matricula: Es la matricula del contenidor
+// *next: Punter al node seguent si escau.
 struct node_list {
-    string value;
+    string matricula;
     node_list *next;
 };
 
-// lista simplement encadenada sense fanstasma no circular
+// Llista simplement encadenada sense fanstasma no circular.
+// S'utilitza per fer l'area d'espera, s'afegiran
+// les matricules sempre al principi.
+// Hem escollit fer una llista de punters encadenada sense fantasma perque
+// Era facil d'implementar.
 node_list *_aespera;
 
-// TERR AKA terr[fileres][pisos][places]
-string ***terr;
+// Estructura per representar la terminal.
+// Es un punter a punter a punter, l'utilitzem per fer un array tridimensional.
+// Sigue per reprensentar fileras, pisos, i places en els eixos x,y i z.
+// Aqui es guardaran els contenidors tal cual s'afegeixin a la terminal:
+// Exemple terminal 2x2x2:
 
+//  filera 0:
+//              1: A10
+//              0: A20 A20
+//                 ___ ___
+//                  0   1
+//  filera 1:
+//              1: 
+//              0: B10 C10
+//                 ___ ___
+//                  0   1
+
+// Llavors amb aquesta representacio seria exacte al nostre terminal.
+// Hem escollit aquesta representacio ja que ens facilita molt el calcul de posicions al terminal.
+// Ja que per exemple en el exemple de adalt tenim que a la filera 1, pis 0, plaça 1, tenim el contenidor A20 que si el busquem al cataleg la seva ubicacio sera realment a la mateixa filera mateix pis pero la plaça apuntara a 0
+// Amb aixo ens facilitará els metodes: fragmentacio i on, ja que tindrem aquest array multidimensional on poder consultar directament les posicions.
+// Varem rebutjar directament el calcular segons un contenidor les seves posicions.
+// Una altre opcio seria tenir al cataleg el conjunt de totes les seves posicions pero varem creure que aixi seria mes facil ja que podem consultar directament que hi ha a X posicio.
+// Altre opcio seria fer un altre cataleg on guardar per matricula les posicions pero ho veiem mes complicat que aquesta implementacio.
+string ***_terminal;
+
+// Variable on tindrem l'estrategia escollida
 estrategia _escollida;
 
-struct our_pair {
-    contenidor *c;
-    ubicacio *u;
+
+// Parell ubicacio i contenidor
+// S'utilitzara per fer un cataleg d'aquest tipus.
+// S'escull per facilitar la llegibilitat del codi.
+// Podriem haber utilitzat un pair pero ens agradaba 
+// mes l'idea de poder consultar fer X._contenidor en comptes de .first...
+struct contenidor_ubicacio {
+    contenidor *_contenidor;
+    ubicacio *_ubicacio;
 };
 
-// Cataleg Matricula:<...>
-cataleg<our_pair> *_cataleg;
+// Cataleg de contenidor i ubicacions
+// Aqui es on es guardaran els contenidor i les seves ubicacions
+// on la seva ubicacio es la primera plaça,filera i pis on es troba.
+// 
+// Nomes teniem dues opcions:
+//      * fer 2 catalegs un per ubicacions i altre per contenidors
+//      * o bé fer 1 i poder consultat tot de cop
+// Hem escollit fer-ho en 1 sol cataleg, ja que creiem que no aporta res tenir-ne 2.
+cataleg<contenidor_ubicacio> *_cataleg;
 
+
+/**
+    El metode d'insercio lliure intentara sempre colocar els contenidors a els pisos mes baixos.
+    
+    Hem escollit aquest metode per la seva sencilleça.
+
+    Les alternatives que varem pensar eren:
+            * colocar per primer fileres - mateixa complexitat que fer-ho per pisos
+            * afegir-los per tamany - pero fent servir aquest tipus es deperdiciaba molta terminal.
+
+    Pre: c es un contenidor valid
+    Post: El terminal sera escrit per la matricula del contenidor c en
+            cas de que hi hagui un lloc lliure al terminal de ser aixi retornara la ubicacio nova.
+
+            En el cas de no tenir espai es retornara la ubicacio de l'area de espera (-1, 0, 0)
+    
+    Cost: O(n^3)
+**/
 ubicacio insereix_lliure (const contenidor &c);
 
+/**
+    El metode d'insercio first intentara sempre colocar els contenidors als primers pisos i a les primeres places.
+    
+    Pre: c es un contenidor valid
+    Post: El terminal sera escrit per la matricula del contenidor c en
+            cas de que hi hagui un lloc lliure al terminal de ser aixi retornara la ubicacio nova.
+
+            En el cas de no tenir espai es retornara la ubicacio de l'area de espera (-1, 0, 0)
+    
+    Cost: O(n^3)
+**/
 ubicacio insereix_first_fit (const contenidor &c);
+
+/**
+    Pre: m=M
+    Post: m es al principi de l'area d'espera
+    Cost: O(1)
+**/
 void afegir_area_espera(const string &m);
+
+/**
+    Pre: ubi es una ubicacio valida
+    Post: elimina el contenidor que estigui a ubi, pasa a l'area d'espera tots 
+            els contenidor que siguin a sobre i intentara reinsertar els contenidors
+            de l'area d'espera a la terminal.
+**/
 void retirar_first_fit(ubicacio &ubi, bool area_espera);
+
+/*
+    Pre: m=Matricula
+    Post: L'area de espera no contindra Matricula
+
+    Cost: O(n) on n es el nombre de contenidors a l'area de espera. 
+*/
 void retirar_area_espera(const string &m);
-list<string>::iterator partition(list<string>::iterator start, list<string>::iterator end_it) const;
-void quick_sort(list<string>::iterator start, list<string>::iterator end_it) const;
+
+/*
+    Recorrerà l’àrea d’espera, començant pel que es va inserir en últim lloc en l’àrea d’espera, 
+    en busca d’un contenidor que pugui ser mogut a l’àrea d’emmagatzematge. Si la cerca té èxit 
+    es moura el contenidor en qüestió des de l’àrea d’espera a la d’emmagatzematge. Aquest procés
+    es repeteix fins que l’àrea d’espera s’ha examinat completament sense que hi hagi cap
+    contenidor susceptible de ser mogut a l’àrea d’emmagatzematge. 
+
+    Pre: buit
+    Post: S'elimina de l'area de espera tots els contenidors que hagin sigut susceptibles de 
+            ser moguts a l'area d'emmagatzematge
+*/
 void reinsertar_area_espera();
+
+
+
+/*
+    Estrategia LLiure:
+
+        Durant una inserció, si existeixen diversos llocs lliures possibles pel nou contenidor,
+        LLIURE tria el “primer” d’ells en un hipotètic recorregut per la terminal de filera en
+        filera, pis a pis, és a dir, preferentment s’usarà el forat amb el número de filera més
+        baix i en cas d’empat, el forat amb el número de pis més baix.
+
+        Gestiona l’àrea d’espera com una llista de contenidors on els últims contenidors
+        inserits a la llista són els que s’intenten recol·locar en primer lloc.
+
+        Cada vegada que l’operació insereix_contenidor té èxit aconseguint col·locar el nou contenidor
+        en l’àrea d’emmagatzematge es recorrerà l’àrea d’espera, començant pel que es va inserir en últim 
+        lloc en l’àrea d’espera, en busca d’un contenidor que pugui ser mogut a l’àrea d’emmagatzematge. 
+        Si la cerca té èxit s’utilitza la regla LLIURE per moure el contenidor en qüestió des 
+        de l’àrea d’espera a la d’emmagatzematge. Aquest procés es repeteix fins que l’àrea d’espera 
+        s’ha examinat completament sense que hi hagi cap contenidor susceptible de ser mogut 
+        a l’àrea d’emmagatzematge.
+
+        En quant a l’operació de retira_contenidor, l’estratègia LLIURE es limita
+        a treure els contenidors que hi hagi per damunt del contenidor a retirar (si n’hi ha),
+        posant-los a l’àrea d’espera. Després es recorre la llista intentant reubicar contenidors
+        de l’àrea d’espera a la d’emmagatzematge, seguint un procés idèntic al que s’ha explicat
+        anteriorment per la inserció.
+*/
+

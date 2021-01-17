@@ -12,7 +12,6 @@ nat _M;             // mida de la taula
 nat _excedents;     // mida de la taula d'excedents
 nat _quants;        // no d'elements guardats al diccionari
 
-int _ex;
 int hash(const string &k) const throw();
 int next_prime(int num) const;
 bool is_prime(const int num) const;

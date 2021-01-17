@@ -1,5 +1,4 @@
 // i = filera, j = plaça, k = pis;
+// S'utilitza per representat la filera, plaça i pis respectivament
 int row, place, floor;
 
-//aquesta funció farà un cour de la ubicació en el format: <filera,plaça,pis>
-//void mostra();

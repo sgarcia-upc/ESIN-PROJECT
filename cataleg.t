@@ -9,7 +9,6 @@ cataleg<Valor>::cataleg(nat numelems) throw(error){
 
     _M = next_prime(numelems);
 
-    _ex = 0;
 
     float ex = _M * 0.14;
     if (ex == (int) ex) _excedents = (int)ex;
@@ -68,9 +67,6 @@ cataleg<Valor>& cataleg<Valor>::operator=(const cataleg& c) throw(error){
 template <typename Valor>
 cataleg<Valor>::~cataleg() throw(){
 
-    //for (int i=0; i<_M+_excedents; i++){
-    //    delete &_taula[i];
-    //}
     delete [] _taula;
 }
 
@@ -81,12 +77,11 @@ template <typename Valor>
 void cataleg<Valor>::assig(const string &k, const Valor &v) throw(error){
     if ( k.length() == 0 ) throw error(ClauStringBuit);
 
-    float load_factor = _quants / _M;
+    float load_factor = (_quants+1) / _M;
     if (load_factor >= 0.75)
        rehash();
 
     int key = hash(k);
-    //std::cout << "CATALEG::ASSIG " << k << " - " << hash(k) << " " << std::endl;
 
     node_hash *n = &_taula[key];
     node_hash *if_nothing = NULL;
@@ -105,7 +100,6 @@ void cataleg<Valor>::assig(const string &k, const Valor &v) throw(error){
                 // Si es la mateixa matricula, actualizem el valor
                 n->_v = v;
             } else {
-                _ex++;
                 // Si no es la mateixa matricula, l'afegim
                 // Trobar el ultim node on el hash es igual
                 bool added = false;
@@ -136,8 +130,14 @@ void cataleg<Valor>::assig(const string &k, const Valor &v) throw(error){
                                 nou->_v = v;
                                 n->next = i;
                                 _quants++;
+                                added = true;
                                 break;
                             }
+                        }
+                
+                        if (not added){
+                            rehash();
+                            assig(k, v);
                         }
                     }
                 }
@@ -224,7 +224,6 @@ template <typename Valor>
 Valor cataleg<Valor>::operator[](const string &k) const throw(error){
 
     int key = hash(k);
-
     node_hash *node = &_taula[key];
 
     if (node->_ss != FREE){ // debe entrar si es busy o deleted
