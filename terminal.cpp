@@ -226,38 +226,29 @@ nat terminal::fragmentacio() const throw(){
                     if (placa == 0){
                         if (piso > 0 and terr[fila][piso][placa+1].length() == 0 and terr[fila][piso-1][placa+1].length() == 0 and terr[fila][piso-1][placa].length() != 0){ //tengo que mirar también si tengo algo debajo, porque si contamos las vacías sin nada debajo nos salen 35
                             contador++;
-                            //~ if ( contador == 1 ) std::cout<<fila<<" "<<piso<<" "<<placa<<std::endl;
                         } else if ( (piso == 0 and terr[fila][piso][placa+1].length() != 0) or ( piso > 0 and terr[fila][piso-1][placa].length() != 0) and terr[fila][piso][placa+1].length() != 0) contador++;
 
                     } else if (placa == _num_places-1){
                         if (piso > 0 and terr[fila][piso][placa-1].length() == 0 and terr[fila][piso-1][placa-1].length() == 0 and terr[fila][piso-1][placa].length() != 0){
                             contador++;
-                            //~ if ( contador == 1 ) std::cout<<fila<<" "<<piso<<" "<<placa<<std::endl;
                         } else if ( (piso == 0 and terr[fila][piso][placa-1].length() != 0) or ( piso > 0 and terr[fila][piso-1][placa].length() != 0 and terr[fila][piso][placa-1].length() != 0)) contador++;
 
                     } else {
                         if ( piso == 0 and terr[fila][piso][placa-1].length() != 0 and terr[fila][piso][placa+1].length() != 0){
                             contador++;
-                            //~ if ( contador == 1 ) std::cout<<fila<<" "<<piso<<" "<<placa<<std::endl;
                         }else if ( piso > 0 ){
                             
-                            if (terr[fila][piso-1][placa].length() != 0){ //quien tenga algo debajo cuenta, quien no, aire
-                                //~ if ( terr[fila][piso-1][placa-1].length() != 0 and terr[fila][piso-1][placa+1].length() != 0){
-                                    //~ contador++;
-                                    //~ if ( contador == 1 ) std::cout<<fila<<" "<<piso<<" "<<placa<<std::endl;
-                                //~ } else 
-                                if ( terr[fila][piso][placa-1].length() != 0 and terr[fila][piso-1][placa+1].length() == 0){ //y tienes algo debajo
+                            if (terr[fila][piso-1][placa].length() != 0){
+                                //si tinc algo a sota i compleixo la resta de condicions comptaré, si no tinc res puc ser una posició "flotant"
+
+                                if ( terr[fila][piso][placa-1].length() != 0 and terr[fila][piso-1][placa+1].length() == 0){
                                     contador++;
-                                    //~ if ( contador == 1 ) std::cout<<fila<<" "<<piso<<" "<<placa<<std::endl;
                                 } else if ( terr[fila][piso][placa+1].length() != 0 and terr[fila][piso-1][placa-1].length() == 0){
                                     contador++;
-                                    //~ if ( contador == 1 ) std::cout<<fila<<" "<<piso<<" "<<placa<<std::endl;
                                 } else if ( terr[fila][piso][placa-1].length() != 0 and terr[fila][piso][placa+1].length() == 0 and terr[fila][piso-1][placa+1].length() == 0){
                                     contador++;
-                                    //~ if ( contador == 1 ) std::cout<<fila<<" "<<piso<<" "<<placa<<std::endl;
-                                } else if ( terr[fila][piso][placa+1].length() != 0 and terr[fila][piso][placa-1].length() == 0 and terr[fila][piso-1][placa-1].length() != 0){
+                                } else if ( terr[fila][piso][placa+1].length() != 0 and terr[fila][piso][placa-1].length() == 0 and terr[fila][piso-1][placa-1].length() == 0){
                                     contador++;
-                                    if ( contador == 1 ) std::cout<<fila<<" "<<piso<<" "<<placa<<std::endl;
                                 } else if ( terr[fila][piso][placa-1].length() != 0 and terr[fila][piso][placa+1].length() != 0 ){
                                     contador++;
                                 } else if ( terr[fila][piso-1][placa-1].length() == 0 and terr[fila][piso-1][placa+1].length() == 0 ){
