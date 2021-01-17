@@ -90,10 +90,12 @@ void cataleg<Valor>::assig(const string &k, const Valor &v) throw(error){
             n->_k = k;
             n->_v = v;
             _quants++;
-
+            break;
         case DELETED:
-            if_nothing = n;
         case BUSY:
+            if ( n->_ss == DELETED)
+                if_nothing = n;
+
             if (n->_k == k){
                 // Si es la mateixa matricula, actualizem el valor
                 n->_v = v;

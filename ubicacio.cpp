@@ -8,7 +8,7 @@
 ubicacio::ubicacio(int i, int j, int k) throw(error)
 {
     // <i, j, k>
-    if ( i>= 0 and j >= 0 and k >=0 or i==-1 and j==0 and k==0 or i==-1 and j==-1 and k==-1 ){
+    if ( (i>= 0 and j >= 0 and k >=0  ) or ( i==-1 and j==0 and k==0 ) or (i==-1 and j==-1 and k==-1 )){
         row = i;
         place = j;
         floor = k;

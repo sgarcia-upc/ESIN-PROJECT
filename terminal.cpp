@@ -166,7 +166,7 @@ ubicacio terminal::on(const string &m) const throw(){
         contenidor_ubicacio p = _cataleg->operator[](m);
         return *p._ubicacio;
 
-    } catch (error(ClauInexistent)) {
+    } catch (error ClauInexistent) {
         return ubicacio(-1, -1, -1);
     }
 
@@ -179,7 +179,7 @@ nat terminal::longitud(const string &m) const throw(error){
     try {
         contenidor_ubicacio p = _cataleg->operator[](m);
         return p._contenidor->longitud();
-    } catch (error(ClauInexistent)) {
+    } catch (error ClauInexistent) {
         throw(error(MatriculaInexistent));
     }
 }
@@ -230,7 +230,7 @@ nat terminal::fragmentacio() const throw(){
                     if (placa == 0){
                         if (piso > 0 and _terminal[fila][piso][placa+1].length() == 0 and _terminal[fila][piso-1][placa+1].length() == 0 and _terminal[fila][piso-1][placa].length() != 0){ //tengo que mirar también si tengo algo debajo, porque si contamos las vacías sin nada debajo nos salen 35
                             contador++;
-                        } else if ( (piso == 0 and _terminal[fila][piso][placa+1].length() != 0) or ( piso > 0 and _terminal[fila][piso-1][placa].length() != 0) and _terminal[fila][piso][placa+1].length() != 0) contador++;
+                        } else if ( (piso == 0 and _terminal[fila][piso][placa+1].length() != 0) or ( piso > 0 and _terminal[fila][piso-1][placa].length() != 0 and _terminal[fila][piso][placa+1].length() != 0)) contador++;
 
                     } else if (placa == _num_places-1){
                         if (piso > 0 and _terminal[fila][piso][placa-1].length() == 0 and _terminal[fila][piso-1][placa-1].length() == 0 and _terminal[fila][piso-1][placa].length() != 0){
