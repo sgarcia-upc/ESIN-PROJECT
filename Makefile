@@ -1,5 +1,4 @@
 OPCIONS = -O0 -Wall -Wextra -Werror -Wno-sign-compare -std=c++11 -ansi -g
-OPCIONS = -O0 -std=c++11 -ansi -g
 
 all: clean program.exe
 

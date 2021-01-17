@@ -364,7 +364,7 @@ ubicacio terminal::insereix_first_fit (const contenidor &c){
 
                         if (c.longitud() == 20){
                             if (_terminal[filera][pis][placa+1].length() == 0){
-                                if (pis == 0 or _terminal[filera][pis-1][placa].length() != 0 and _terminal[filera][pis-1][placa+1].length() != 0){
+                                if (pis == 0 or (_terminal[filera][pis-1][placa].length() != 0 and _terminal[filera][pis-1][placa+1].length() != 0)){
                                     _terminal[filera][pis][placa] = c.matricula();
                                     _terminal[filera][pis][placa+1] = c.matricula();
                                     return ubicacio(filera,placa,pis);
@@ -423,8 +423,8 @@ ubicacio terminal::insereix_lliure (const contenidor &c){
                         }
 
                         if (c.longitud() == 20){
-                                if (_terminal[filera][pis][placa+1].length() == 0){
-                                 if (pis == 0 or _terminal[filera][pis-1][placa].length() != 0 and _terminal[filera][pis-1][placa+1].length() != 0){
+                            if (_terminal[filera][pis][placa+1].length() == 0){
+                                if (pis == 0 or (_terminal[filera][pis-1][placa].length() != 0 and _terminal[filera][pis-1][placa+1].length() != 0)){
                                     _terminal[filera][pis][placa] = c.matricula();
                                     _terminal[filera][pis][placa+1] = c.matricula();
                                     return ubicacio(filera,placa,pis);
@@ -542,6 +542,7 @@ void terminal::retirar_terminal(ubicacio &ubi, bool area_espera){
                     contenidor_ubicacio p = _cataleg->operator[](matricula);
                     if (area_espera){
                         p._ubicacio = new ubicacio(-1,0,0);
+                        _cataleg->assig(matricula, p);
                         _num_ops++;
                         afegir_area_espera(matricula);
                     } else {
