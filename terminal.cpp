@@ -260,6 +260,8 @@ nat terminal::fragmentacio() const throw(){
                                     if ( contador == 1 ) std::cout<<fila<<" "<<piso<<" "<<placa<<std::endl;
                                 } else if ( terr[fila][piso][placa-1].length() != 0 and terr[fila][piso][placa+1].length() != 0 ){
                                     contador++;
+                                } else if ( terr[fila][piso-1][placa-1].length() == 0 and terr[fila][piso-1][placa+1].length() == 0 ){
+                                    contador++;
                                 }
                             }
                         }
